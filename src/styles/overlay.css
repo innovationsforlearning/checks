@@ -1,0 +1,270 @@
+/* ── Fullscreen overlay (touch/drag/trackpad stages) ── */
+.fs-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: contain;
+}
+.fs-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+.fs-header-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.fs-header-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.fs-status {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.fs-status.pass {
+  color: var(--green);
+}
+.fs-arena {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.fs-footer {
+  padding: 0.85rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Corner zones */
+.fs-touch-zone {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--border-strong);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 1.75rem;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.fs-touch-zone.hit {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green);
+}
+#fs-tz-tl {
+  top: 24px;
+  left: 24px;
+}
+#fs-tz-tr {
+  top: 24px;
+  right: 24px;
+}
+#fs-tz-bl {
+  bottom: 24px;
+  left: 24px;
+}
+#fs-tz-br {
+  bottom: 24px;
+  right: 24px;
+}
+#fs-tz-c {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+/* Drag-to-drop within touch/trackpad test */
+.fs-drag-source {
+  position: absolute;
+  top: 50%;
+  left: 25%;
+  transform: translate(-50%, -50%);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  font-size: 1.5rem;
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.15);
+  transition:
+    box-shadow 0.15s,
+    background 0.15s;
+}
+.fs-drag-source:active {
+  cursor: grabbing;
+}
+.fs-drag-source.dragging {
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.3);
+}
+.fs-drag-source.hit {
+  background: var(--green);
+  box-shadow: none;
+}
+.fs-drag-drop {
+  position: absolute;
+  top: 50%;
+  left: 75%;
+  transform: translate(-50%, -50%);
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 2px dashed var(--border-strong);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+.fs-drag-drop.over {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--text);
+}
+.fs-drag-drop.hit {
+  border-style: solid;
+  border-color: var(--green);
+  background: var(--green-bg);
+  color: var(--green);
+}
+.fs-drag-tooltip {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.fs-drag-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--text);
+}
+
+/* Fullscreen drag stage */
+#fs-drag-track {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.fs-drag-line-bg {
+  position: absolute;
+  top: 50%;
+  left: 80px;
+  right: 80px;
+  height: 3px;
+  background: var(--border);
+  transform: translateY(-50%);
+}
+#fs-drag-line {
+  position: absolute;
+  top: 50%;
+  left: 80px;
+  height: 3px;
+  width: 0;
+  background: var(--accent);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.fs-drag-zone {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+#fs-drag-start {
+  left: 30px;
+}
+#fs-drag-end {
+  right: 30px;
+}
+#fs-drag-start.dragging {
+  border-color: var(--accent);
+}
+#fs-drag-end.reached {
+  border-color: var(--green);
+  background: var(--green-bg);
+  color: var(--green);
+}
+#fs-drag-handle {
+  position: absolute;
+  top: 50%;
+  left: 80px;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: grab;
+  touch-action: none;
+}
+#fs-drag-handle:active {
+  cursor: grabbing;
+}
+.fs-drag-hint {
+  position: absolute;
+  bottom: 12%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+  pointer-events: none;
+}

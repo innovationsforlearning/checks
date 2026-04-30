@@ -1,0 +1,104 @@
+.diag-summary {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+.diag-summary-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.75rem;
+  margin-bottom: 1.25rem;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--muted);
+}
+.diag-summary-icon.ok {
+  background: var(--green-bg);
+  color: var(--green);
+  border-color: var(--green);
+}
+.diag-summary-icon.warn {
+  background: var(--amber-bg);
+  color: var(--amber);
+  border-color: var(--amber);
+}
+.diag-summary-icon.bad {
+  background: var(--red-bg);
+  color: var(--red);
+  border-color: var(--red);
+}
+.diag-summary-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.diag-summary-line {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  min-height: 1.4em;
+}
+.diag-toggle {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 4px 8px;
+}
+.diag-toggle:hover {
+  color: var(--text);
+}
+.diag-details {
+  display: none;
+  margin-top: 1.25rem;
+}
+.diag-details.open {
+  display: block;
+}
+
+.diag-grid {
+  background: var(--surface);
+  padding: 1.25rem 1.5rem;
+}
+.diag-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.diag-row:last-child {
+  border-bottom: none;
+}
+.diag-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.diag-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+  text-align: right;
+  word-break: break-all;
+}
+.diag-value.ok {
+  color: var(--green);
+}
+.diag-value.warn {
+  color: var(--amber);
+}
+.diag-value.bad {
+  color: var(--red);
+}
+.diag-value.muted {
+  color: var(--muted);
+}

@@ -1,0 +1,24 @@
+{
+  "name": "system-check",
+  "description": "Browser-based device readiness check — webcam, mic, speakers, keyboard, touch, network, and WebRTC.",
+  "repository": "https://github.com/innovationsforlearning/checks",
+  "keywords": ["static", "vite", "device-check"],
+  "stack": "heroku-24",
+  "buildpacks": [{ "url": "heroku/nodejs" }],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment used at runtime.",
+      "value": "production"
+    },
+    "NPM_CONFIG_PRODUCTION": {
+      "description": "Set to false so devDependencies (vite) are installed for the build step. Heroku prunes them after `heroku-postbuild` runs.",
+      "value": "false"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  }
+}

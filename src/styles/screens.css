@@ -1,0 +1,105 @@
+.screen {
+  display: none;
+}
+.screen.active {
+  display: block;
+}
+
+#screen-welcome {
+  padding-top: 2rem;
+  max-width: 640px;
+}
+#screen-welcome .subtitle {
+  margin-bottom: 1.25rem;
+}
+#screen-welcome .subtitle:last-of-type {
+  margin-bottom: 2rem;
+}
+
+#screen-test {
+  display: none;
+}
+#screen-test.active {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.test-header {
+  display: none;
+}
+.test-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.test-instruction {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.test-body {
+  padding: 0;
+  flex: 1;
+}
+
+.test-footer {
+  padding-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.test-status {
+  display: none;
+}
+.test-status.pass {
+  color: var(--green);
+}
+.test-status.fail {
+  color: var(--red);
+}
+.test-status.skip {
+  color: var(--amber);
+}
+
+#progress-label-right {
+  display: none;
+}
+
+.test-prompt {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.test-prompt-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.test-prompt-sub {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.progress-bar {
+  width: 100%;
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.progress-track {
+  height: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}

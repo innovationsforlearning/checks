@@ -1,0 +1,66 @@
+.results-header {
+  margin-bottom: 2rem;
+}
+.results-score {
+  font-size: 4rem;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+.results-score.all-pass {
+  color: var(--green);
+}
+.results-score.has-fail {
+  color: var(--amber);
+}
+.results-tagline {
+  color: var(--muted);
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.result-row:last-child {
+  border-bottom: none;
+}
+.result-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+.result-name {
+  flex: 1;
+  font-weight: 500;
+}
+.result-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  letter-spacing: 0.05em;
+}
+.badge-pass {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.badge-fail {
+  background: var(--red-bg);
+  color: var(--red);
+}
+.badge-skip {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.results-footer {
+  margin-top: 2rem;
+  display: flex;
+  gap: 10px;
+}
+.results-footer .btn {
+  flex: 1;
+  max-width: 200px;
+}

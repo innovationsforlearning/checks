@@ -1,0 +1,139 @@
+/* ── Webcam ── */
+#webcam-video {
+  width: 100%;
+  max-height: 400px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #000;
+  display: block;
+}
+
+/* ── Mic ── */
+#mic-meter-wrap {
+  background: var(--surface);
+  padding: 2rem;
+  text-align: center;
+}
+.meter-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  height: 80px;
+  margin: 0 auto 1rem;
+}
+.meter-bar {
+  width: 12px;
+  background: var(--border-strong);
+  transition: height 0.05s ease;
+}
+.meter-bar.active {
+  background: var(--green);
+}
+
+/* ── Speaker ── */
+#speaker-vis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  gap: 5px;
+  background: var(--surface);
+}
+.wave-bar {
+  width: 8px;
+  background: var(--accent);
+  animation: wave 0.8s ease-in-out infinite;
+  animation-play-state: paused;
+}
+.wave-bar.playing {
+  animation-play-state: running;
+}
+@keyframes wave {
+  0%,
+  100% {
+    height: 8px;
+  }
+  50% {
+    height: 50px;
+  }
+}
+
+/* ── Keyboard ── */
+.kb-layout {
+  background: var(--surface);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+}
+.kb-row {
+  display: flex;
+  gap: 6px;
+}
+.kb-key {
+  height: 44px;
+  min-width: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-radius: 5px;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+  flex-shrink: 0;
+  user-select: none;
+}
+.kb-key.hit {
+  background: var(--green-bg);
+  border-color: var(--green);
+  color: var(--green);
+}
+.kb-key-bs {
+  min-width: 86px;
+}
+.kb-key-tab {
+  min-width: 64px;
+}
+.kb-key-caps {
+  min-width: 76px;
+}
+.kb-key-enter {
+  min-width: 80px;
+}
+.kb-key-shift {
+  min-width: 96px;
+}
+.kb-key-space {
+  min-width: 280px;
+}
+.kb-extras {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.kb-extras-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  margin-right: 4px;
+}
+#key-input-field {
+  opacity: 0;
+  position: absolute;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}

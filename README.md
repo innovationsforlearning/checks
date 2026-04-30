@@ -2,61 +2,105 @@
 
 A browser-based device readiness check. Walks a user through a sequence of short tests to verify their hardware and connection are good enough for video calls and interactive learning.
 
-Built as a single static page powered by [Vite](https://vitejs.dev/).
+Built as a [Vite](https://vitejs.dev/) static app — vanilla JavaScript, no framework, deployable anywhere that serves static files.
 
 ## What it tests
 
-| Stage | Checks |
-| --- | --- |
-| Browser & device | User agent, OS, viewport — captured for support context |
-| Network | Online status, connection type, latency to the app and the public internet, **download/upload bandwidth** (via Cloudflare's `speed.cloudflare.com` endpoints) |
-| Video calling (WebRTC) | WebRTC support, STUN reachability, ICE candidate types, public IP |
-| Webcam | Live preview — user confirms they can see themselves |
-| Microphone | Live level meter with auto voice detection |
-| Speakers | Plays a tone; user confirms they heard it |
-| Touchscreen | Tap-the-corners and drag-to-target (skipped on non-touch devices) |
-| Trackpad / Mouse | Click-the-corners and drag-to-target |
-| Keyboard | On-screen keyboard layout lights up each key as it's pressed |
+| Stage                  | Checks                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser & device       | User agent, OS, viewport, cookies, local storage                                                                                                              |
+| Network                | Online status, connection type, latency to the app and the public internet, **download/upload bandwidth** (via Cloudflare's `speed.cloudflare.com` endpoints) |
+| Video calling (WebRTC) | WebRTC support, STUN reachability, ICE candidate types, public IP                                                                                             |
+| Webcam                 | Live preview — user confirms they can see themselves                                                                                                          |
+| Microphone             | Live level meter with auto voice detection                                                                                                                    |
+| Speakers               | Plays a tone; user confirms they heard it                                                                                                                     |
+| Touchscreen            | Tap-the-corners + drag-to-target (skipped on non-touch devices)                                                                                               |
+| Touchscreen (drag)     | Horizontal drag gesture (skipped on non-touch devices)                                                                                                        |
+| Trackpad / Mouse       | Click-the-corners + drag-to-target                                                                                                                            |
+| Keyboard               | On-screen keyboard layout that lights up each key as it's pressed                                                                                             |
 
-Each stage produces a pass / warn / fail / skip result, and the final screen summarises the run.
+Each stage produces a `pass` / `warn` / `fail` / `skip` result, and the final screen summarises the run.
 
 ## Requirements
 
-- Node.js 18+ (for the dev server and build)
+- Node.js 18 or newer
 - A modern browser with permissions for camera, mic, and (if testing) touch input
 
 ## Getting started
 
 ```bash
 npm install
-npm run dev      # start the Vite dev server (http://localhost:5173)
+npm run dev      # http://localhost:5173
 ```
 
-For a production build:
+Production build:
 
 ```bash
 npm run build    # outputs to dist/
 npm run preview  # serve the built bundle locally
 ```
 
-The page is fully static — `dist/` can be hosted anywhere (S3, Netlify, Cloudflare Pages, GitHub Pages, etc.).
+`dist/` is fully static — host it on any object store, CDN, or static-site service.
+
+## Deploying
+
+### Heroku (Heroku Pipelines)
+
+This repo is set up to deploy as a Heroku Node.js app:
+
+- `package.json` declares `engines.node ≥ 18`, a `heroku-postbuild` step that runs `vite build`, and a `start` script that serves `dist/` via [`serve`](https://www.npmjs.com/package/serve) on `$PORT`.
+- `Procfile` runs `npm start`.
+- `app.json` declares the app for Pipelines / Review Apps.
+
+Create the app and push:
+
+```bash
+heroku create system-check --stack heroku-24
+git push heroku main
+heroku open
+```
+
+For a pipeline:
+
+```bash
+heroku pipelines:create system-check -a system-check-staging
+heroku pipelines:add system-check -a system-check-production -s production
+```
+
+Promote staging → production via the dashboard or `heroku pipelines:promote`.
+
+### Anywhere else
+
+Run `npm run build` and upload `dist/` to your host of choice (S3, Netlify, Cloudflare Pages, GitHub Pages, nginx, etc.). There are no runtime dependencies.
 
 ## Network thresholds
 
 The network stage's verdict combines latency and bandwidth:
 
-- **Healthy**: latency < 600 ms to both targets, download ≥ 5 Mbps, upload ≥ 3 Mbps
-- **Warn**: any of latency > 600 ms, download < 5 Mbps, or upload < 3 Mbps
-- **Fail**: offline, no network response, app latency > 1500 ms, or download < 1.5 Mbps
+- **Healthy** — latency < 600 ms to both targets, download ≥ 5 Mbps, upload ≥ 3 Mbps
+- **Warn** — any of: latency > 600 ms, download < 5 Mbps, or upload < 3 Mbps
+- **Fail** — offline, no network response, app latency > 1500 ms, or download < 1.5 Mbps
 
-Bandwidth measurement uses Cloudflare's public speed-test endpoints (`__down`, `__up`) with a 12-second cap per direction, so a stuck connection still produces a result rather than hanging the stage.
+Bandwidth uses Cloudflare's public speed-test endpoints (`__down`, `__up`) with a 12-second cap per direction, so a stuck connection still produces a result rather than hanging the stage.
 
 ## Project layout
 
 ```
-index.html       # entire app — markup, styles, and test logic in one file
-vite.config.js   # Vite config
-package.json     # scripts and dev dependency on Vite
+index.html        # static shell — no app logic
+src/
+  main.js         # bootstrap + stage runner
+  results.js      # final results screen
+  lib/            # cleanup bag + small helpers
+  ui/             # screens, progress, footer, diag, overlay
+  stages/         # one file per test
+  styles/         # CSS, split by concern
+Procfile          # Heroku web process
+app.json          # Heroku app manifest
+vite.config.js    # Vite config
 ```
 
-The app is intentionally kept as a single self-contained HTML file so it can be served as a static asset with no runtime dependencies.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on the stage contract and how to add a new test.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
