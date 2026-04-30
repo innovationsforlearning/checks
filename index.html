@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Device Check — ChapterOne</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f7f8;
+    --surface2: #f0f0f2;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #111827;
+    --green: #16a34a;
+    --green-bg: #dcfce7;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --amber: #d97706;
+    --amber-bg: #fef3c7;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem 3rem;
+    gap: 1.5rem;
+  }
+
+  .logo {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .logo span { color: var(--text); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  h1 { font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--muted); margin-bottom: 2rem; max-width: 640px; }
+
+  /* ── Welcome ── */
+  #screen-welcome { padding-top: 2rem; max-width: 640px; }
+  #screen-welcome .subtitle { margin-bottom: 1.25rem; }
+  #screen-welcome .subtitle:last-of-type { margin-bottom: 2rem; }
+
+  /* ── Progress ── */
+  .progress-bar { width: 100%; }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease;
+  }
+
+  /* ── Test ── */
+  #screen-test { display: none; }
+  #screen-test.active { display: flex; flex-direction: column; gap: 1.5rem; flex: 1; }
+
+  .test-header { display: none; }
+  .test-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 4px; }
+  .test-instruction { color: var(--muted); font-size: 0.95rem; }
+
+  .test-body { padding: 0; flex: 1; }
+
+  .test-footer {
+    padding-top: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .test-status { display: none; }
+  .test-status.pass { color: var(--green); }
+  .test-status.fail { color: var(--red); }
+  .test-status.skip { color: var(--amber); }
+
+  #progress-label-right { display: none; }
+
+  .test-prompt {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .test-prompt-heading {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .test-prompt-sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 9px 18px;
+    border: 1px solid var(--border-strong);
+    background: white;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+  }
+  .btn:hover { background: var(--surface); }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: #000; border-color: #000; }
+  .btn-sm { padding: 7px 14px; font-size: 0.85rem; }
+  .btn-group { display: flex; gap: 8px; }
+
+  /* ── Diagnostics (browser/network/webrtc) ── */
+  .diag-summary {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+  }
+  .diag-summary-icon {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.75rem;
+    margin-bottom: 1.25rem;
+    border: 2px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--muted);
+  }
+  .diag-summary-icon.ok   { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+  .diag-summary-icon.warn { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+  .diag-summary-icon.bad  { background: var(--red-bg);   color: var(--red);   border-color: var(--red); }
+  .diag-summary-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .diag-summary-line {
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    min-height: 1.4em;
+  }
+  .diag-toggle {
+    display: inline-block;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 4px 8px;
+  }
+  .diag-toggle:hover { color: var(--text); }
+  .diag-details { display: none; margin-top: 1.25rem; }
+  .diag-details.open { display: block; }
+
+  .diag-grid {
+    background: var(--surface);
+    padding: 1.25rem 1.5rem;
+  }
+  .diag-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .diag-row:last-child { border-bottom: none; }
+  .diag-label {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .diag-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+  }
+  .diag-value.ok   { color: var(--green); }
+  .diag-value.warn { color: var(--amber); }
+  .diag-value.bad  { color: var(--red); }
+  .diag-value.muted { color: var(--muted); }
+
+  /* ── Webcam ── */
+  #webcam-video {
+    width: 100%;
+    max-height: 400px;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #000;
+    display: block;
+  }
+
+  /* ── Mic ── */
+  #mic-meter-wrap {
+    background: var(--surface);
+    padding: 2rem;
+    text-align: center;
+  }
+  .meter-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    height: 80px;
+    margin: 0 auto 1rem;
+  }
+  .meter-bar {
+    width: 12px;
+    background: var(--border-strong);
+    transition: height 0.05s ease;
+  }
+  .meter-bar.active { background: var(--green); }
+
+  /* ── Speaker ── */
+  #speaker-vis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    gap: 5px;
+    background: var(--surface);
+  }
+  .wave-bar {
+    width: 8px;
+    background: var(--accent);
+    animation: wave 0.8s ease-in-out infinite;
+    animation-play-state: paused;
+  }
+  .wave-bar.playing { animation-play-state: running; }
+  @keyframes wave {
+    0%, 100% { height: 8px; }
+    50% { height: 50px; }
+  }
+
+  /* ── Keyboard ── */
+  .kb-layout {
+    background: var(--surface);
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    overflow-x: auto;
+  }
+  .kb-row {
+    display: flex;
+    gap: 6px;
+  }
+  .kb-key {
+    height: 44px;
+    min-width: 44px;
+    padding: 0 10px;
+    border: 1px solid var(--border-strong);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+    border-radius: 5px;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .kb-key.hit {
+    background: var(--green-bg);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .kb-key-bs    { min-width: 86px; }
+  .kb-key-tab   { min-width: 64px; }
+  .kb-key-caps  { min-width: 76px; }
+  .kb-key-enter { min-width: 80px; }
+  .kb-key-shift { min-width: 96px; }
+  .kb-key-space { min-width: 280px; }
+  .kb-extras {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .kb-extras-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    margin-right: 4px;
+  }
+  #key-input-field {
+    opacity: 0;
+    position: absolute;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+  }
+
+  /* ── Results ── */
+  .results-header { margin-bottom: 2rem; }
+  .results-score {
+    font-size: 4rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .results-score.all-pass { color: var(--green); }
+  .results-score.has-fail { color: var(--amber); }
+  .results-tagline { color: var(--muted); }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-icon { font-size: 16px; width: 20px; text-align: center; }
+  .result-name { flex: 1; font-weight: 500; }
+  .result-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    letter-spacing: 0.05em;
+  }
+  .badge-pass { background: var(--green-bg); color: var(--green); }
+  .badge-fail { background: var(--red-bg); color: var(--red); }
+  .badge-skip { background: var(--amber-bg); color: var(--amber); }
+
+  .results-footer {
+    margin-top: 2rem;
+    display: flex;
+    gap: 10px;
+  }
+  .results-footer .btn { flex: 1; max-width: 200px; }
+
+  /* ── Fullscreen overlay ── */
+  .fs-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    touch-action: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: contain;
+  }
+  .fs-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+  .fs-header-title { font-size: 1rem; font-weight: 600; }
+  .fs-header-sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .fs-status {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .fs-status.pass { color: var(--green); }
+  .fs-arena { flex: 1; position: relative; overflow: hidden; }
+  .fs-footer {
+    padding: 0.85rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Fullscreen touch zones */
+  .fs-touch-zone {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 2px solid var(--border-strong);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 1.75rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .fs-touch-zone.hit {
+    background: var(--green-bg);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  #fs-tz-tl { top: 24px; left: 24px; }
+  #fs-tz-tr { top: 24px; right: 24px; }
+  #fs-tz-bl { bottom: 24px; left: 24px; }
+  #fs-tz-br { bottom: 24px; right: 24px; }
+  #fs-tz-c {
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+  }
+
+  /* Drag-to-drop within touch test */
+  .fs-drag-source {
+    position: absolute;
+    top: 50%;
+    left: 25%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;
+    font-size: 1.5rem;
+    user-select: none;
+    box-shadow: 0 4px 12px rgba(17,24,39,0.15);
+    transition: box-shadow 0.15s, background 0.15s;
+  }
+  .fs-drag-source:active { cursor: grabbing; }
+  .fs-drag-source.dragging { box-shadow: 0 10px 30px rgba(17,24,39,0.3); }
+  .fs-drag-source.hit { background: var(--green); box-shadow: none; }
+  .fs-drag-drop {
+    position: absolute;
+    top: 50%;
+    left: 75%;
+    transform: translate(-50%, -50%);
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 2px dashed var(--border-strong);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .fs-drag-drop.over {
+    border-style: solid;
+    border-color: var(--accent);
+    background: var(--surface);
+    color: var(--text);
+  }
+  .fs-drag-drop.hit {
+    border-style: solid;
+    border-color: var(--green);
+    background: var(--green-bg);
+    color: var(--green);
+  }
+  .fs-drag-tooltip {
+    position: absolute;
+    bottom: calc(100% + 14px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .fs-drag-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--text);
+  }
+
+  /* Fullscreen drag */
+  #fs-drag-track {
+    position: absolute;
+    inset: 0;
+    touch-action: none;
+  }
+  .fs-drag-line-bg {
+    position: absolute;
+    top: 50%;
+    left: 80px;
+    right: 80px;
+    height: 3px;
+    background: var(--border);
+    transform: translateY(-50%);
+  }
+  #fs-drag-line {
+    position: absolute;
+    top: 50%;
+    left: 80px;
+    height: 3px;
+    width: 0;
+    background: var(--accent);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .fs-drag-zone {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  #fs-drag-start { left: 30px; }
+  #fs-drag-end { right: 30px; }
+  #fs-drag-start.dragging { border-color: var(--accent); }
+  #fs-drag-end.reached {
+    border-color: var(--green);
+    background: var(--green-bg);
+    color: var(--green);
+  }
+  #fs-drag-handle {
+    position: absolute;
+    top: 50%;
+    left: 80px;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: grab;
+    touch-action: none;
+  }
+  #fs-drag-handle:active { cursor: grabbing; }
+  .fs-drag-hint {
+    position: absolute;
+    bottom: 12%;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  /* ── Fade ── */
+  .fade-in { animation: fadeIn 0.25s ease forwards; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="logo">check<span>.</span>chapterone<span>.</span>org</div>
+
+  <!-- Welcome -->
+  <div id="screen-welcome" class="screen active fade-in">
+    <h1>Device Check</h1>
+    <p class="subtitle">This check runs through every essential part of your device — camera, microphone, speakers, keyboard, touch sensitivity, and network connectivity. It takes about three minutes.</p>
+    <p class="subtitle"><strong>Nothing is saved.</strong> Any audio or video captured during the test is processed entirely in your browser and discarded the moment the check ends. We use it only to confirm your hardware is working.</p>
+    <p class="subtitle">By starting, you agree to grant temporary access to your camera, microphone, and other device sensors so we can verify they're functioning.</p>
+    <button class="btn btn-primary" onclick="startTests()">I agree — start the check →</button>
+  </div>
+
+  <!-- Test -->
+  <div id="screen-test" class="screen">
+    <div class="progress-bar">
+      <div class="progress-label">
+        <span id="progress-label-left">Test 1 of 7</span>
+        <span id="progress-label-right"></span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+    <div class="test-header">
+      <div class="test-title" id="test-title">Webcam</div>
+      <div class="test-instruction" id="test-instruction">Loading...</div>
+    </div>
+    <div class="test-body fade-in" id="test-body"></div>
+    <div class="test-footer">
+      <div class="test-status" id="test-status-label">Waiting...</div>
+      <div class="btn-group" id="test-btns"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="screen-results" class="screen">
+    <div class="results-header">
+      <div class="results-score" id="results-score">7/7</div>
+      <div class="results-tagline" id="results-tagline">All checks passed</div>
+    </div>
+    <div id="results-list"></div>
+    <div class="results-footer">
+      <button class="btn" onclick="restartTests()">Run again</button>
+      <button class="btn btn-primary" onclick="showWelcome()">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TESTS = [
+  { id: 'browser',  icon: '💻', name: 'Browser & device',     instruction: 'Capturing your browser and operating system info — useful for support.' },
+  { id: 'network',  icon: '🌐', name: 'Network',              instruction: 'Measuring connection latency, reachability, and bandwidth.' },
+  { id: 'webrtc',   icon: '📡', name: 'Video calling',        instruction: 'Checking if your network allows real-time video connections.' },
+  { id: 'webcam',   icon: '📷', name: 'Webcam',               instruction: 'Your camera will turn on. If you can see yourself, tap "Looks good."' },
+  { id: 'mic',      icon: '🎙️', name: 'Microphone',           instruction: 'Say something out loud. Watch the level meter move — it will auto-detect your voice.' },
+  { id: 'speaker',  icon: '🔊', name: 'Speakers',             instruction: 'A tone will play. Turn your volume up if needed, then confirm whether you heard it.' },
+  { id: 'touch',    icon: '👆', name: 'Touchscreen (tap & drag)', instruction: 'Tap each of the four corners, then drag the circle into the target.', skipIfNoTouch: true },
+  { id: 'drag',     icon: '↔️', name: 'Touchscreen (drag)',   instruction: 'Press and drag from the left circle all the way to the right.', skipIfNoTouch: true },
+  { id: 'trackpad', icon: '⬛', name: 'Trackpad / Mouse',     instruction: 'Click each of the four corners, then drag the circle into the target.' },
+  { id: 'keyboard', icon: '⌨️', name: 'Keyboard',             instruction: 'Press every key shown on the keyboard layout. Each lights up when detected.' },
+];
+
+let currentTest = 0;
+let results = {};
+let touchSupported = false;
+let timeoutHandle = null;
+let micStream = null;
+let camStream = null;
+let audioCtx = null;
+let trackpadDwellTimer = null;
+
+function hasTouchScreen() {
+  return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0));
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function startTests() {
+  touchSupported = hasTouchScreen();
+  currentTest = 0;
+  results = {};
+  showScreen('test');
+  runTest(currentTest);
+}
+
+function runTest(index) {
+  clearTimeout(timeoutHandle);
+  const test = TESTS[index];
+  if (!test) { showResults(); return; }
+
+  if (test.skipIfNoTouch && !touchSupported) {
+    results[test.id] = { status: 'skip', label: 'No touchscreen detected' };
+    advanceTest();
+    return;
+  }
+
+  updateProgress(index);
+  document.getElementById('test-title').textContent = test.name;
+  document.getElementById('test-instruction').textContent = test.instruction;
+  document.getElementById('test-status-label').className = 'test-status';
+  document.getElementById('test-status-label').textContent = 'Ready';
+  document.getElementById('test-btns').innerHTML = '';
+
+  const body = document.getElementById('test-body');
+  body.classList.remove('fade-in');
+  void body.offsetWidth;
+  body.classList.add('fade-in');
+  body.innerHTML = '';
+
+  const fn = { browser, network, webrtc, webcam, mic, speaker, touch, drag, trackpad, keyboard };
+  fn[test.id](body);
+}
+
+function updateProgress(index) {
+  const active = TESTS.filter(t => !(t.skipIfNoTouch && !touchSupported));
+  const pos = active.findIndex(t => t.id === TESTS[index].id) + 1;
+  const total = active.length;
+  const pct = ((pos - 1) / total) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label-left').textContent = `Test ${pos} of ${total}`;
+  document.getElementById('progress-label-right').textContent = TESTS[index].name;
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('test-status-label');
+  el.className = 'test-status ' + type;
+  el.textContent = msg;
+}
+
+function setButtons(btns) {
+  const wrap = document.getElementById('test-btns');
+  wrap.innerHTML = '';
+  btns.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm' + (b.primary ? ' btn-primary' : '');
+    btn.textContent = b.label;
+    btn.onclick = b.action;
+    wrap.appendChild(btn);
+  });
+}
+
+function markResult(status, label) {
+  results[TESTS[currentTest].id] = { status, label };
+}
+
+function advanceTest() {
+  stopStreams();
+  const body = document.getElementById('test-body');
+  if (body && typeof body._cleanup === 'function') {
+    body._cleanup();
+    body._cleanup = null;
+  }
+  currentTest++;
+  setTimeout(() => runTest(currentTest), 350);
+}
+
+function stopStreams() {
+  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  if (audioCtx) { try { audioCtx.close(); } catch(e){} audioCtx = null; }
+  clearTimeout(timeoutHandle);
+  clearTimeout(trackpadDwellTimer);
+  const o = document.getElementById('fs-overlay');
+  if (o) { if (typeof o._cleanup === 'function') o._cleanup(); o.remove(); }
+}
+
+// ── WEBCAM ──
+function webcam(body) {
+  body.innerHTML = `
+    <div class="test-prompt">
+      <h2 class="test-prompt-heading">Starting your camera…</h2>
+      <p class="test-prompt-sub">Allow camera access if your browser asks.</p>
+    </div>
+    <video id="webcam-video" autoplay muted playsinline></video>`;
+  const heading = body.querySelector('.test-prompt-heading');
+  const sub = body.querySelector('.test-prompt-sub');
+  const v = body.querySelector('#webcam-video');
+
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      camStream = stream;
+      v.srcObject = stream;
+      heading.textContent = 'Can you see yourself?';
+      sub.textContent = 'Your camera should be showing a live preview below.';
+      setButtons([
+        { label: 'Yes, that\'s me ✓', primary: true, action: () => { markResult('pass','Camera working'); advanceTest(); }},
+        { label: 'I don\'t see anything', action: () => { markResult('fail','No video visible'); advanceTest(); }}
+      ]);
+    })
+    .catch(() => {
+      body.innerHTML = `
+        <div class="test-prompt">
+          <h2 class="test-prompt-heading">We couldn't start your camera</h2>
+          <p class="test-prompt-sub">Permission was denied or no camera was found. That's okay — we'll move on.</p>
+        </div>`;
+      markResult('fail', 'Camera unavailable');
+      setButtons([{ label: 'Got it →', primary: true, action: advanceTest }]);
+    });
+}
+
+// ── MIC ──
+function mic(body) {
+  body.innerHTML = `
+    <div class="test-prompt">
+      <h2 class="test-prompt-heading" id="mic-heading">Say something out loud</h2>
+      <p class="test-prompt-sub" id="mic-sub">Watch the bars move as you speak. Allow microphone access if your browser asks.</p>
+    </div>
+    <div id="mic-meter-wrap">
+      <div class="meter-bars" id="meter-bars">
+        ${Array(16).fill(0).map((_,i) => `<div class="meter-bar" id="bar-${i}" style="height:6px"></div>`).join('')}
+      </div>
+    </div>`;
+
+  const heading = body.querySelector('#mic-heading');
+  const sub = body.querySelector('#mic-sub');
+  let passed = false;
+
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      micStream = stream;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      src.connect(analyser);
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      let highCount = 0;
+
+      function tick() {
+        if (!micStream) return;
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a,b) => a+b, 0) / data.length;
+        const bars = document.querySelectorAll('.meter-bar');
+        bars.forEach((bar, i) => {
+          const h = Math.min(60, (data[i * 2] / 255) * 60);
+          bar.style.height = Math.max(6, h) + 'px';
+          bar.classList.toggle('active', h > 10);
+        });
+        if (avg > 18 && !passed) {
+          highCount++;
+          if (highCount > 8) {
+            passed = true;
+            heading.textContent = 'We can hear you ✓';
+            sub.textContent = 'Your microphone is working.';
+            markResult('pass', 'Microphone working');
+            setButtons([{ label: 'Sounds good →', primary: true, action: advanceTest }]);
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+      tick();
+      setButtons([
+        { label: 'I don\'t see anything moving', action: () => { markResult('fail','No mic detected'); advanceTest(); }}
+      ]);
+      timeoutHandle = setTimeout(() => {
+        if (!passed) { markResult('fail','No audio detected'); advanceTest(); }
+      }, 12000);
+    })
+    .catch(() => {
+      body.innerHTML = `
+        <div class="test-prompt">
+          <h2 class="test-prompt-heading">We couldn't start your microphone</h2>
+          <p class="test-prompt-sub">Permission was denied or no microphone was found. That's okay — we'll move on.</p>
+        </div>`;
+      markResult('fail','Mic unavailable');
+      setButtons([{ label: 'Got it →', primary: true, action: advanceTest }]);
+    });
+}
+
+// ── SPEAKER ──
+function speaker(body) {
+  body.innerHTML = `
+    <div class="test-prompt">
+      <h2 class="test-prompt-heading">Did you hear that?</h2>
+      <p class="test-prompt-sub">A short tone is playing now. Turn your volume up if you missed it.</p>
+    </div>
+    <div id="speaker-vis">
+      ${Array(7).fill(0).map((_,i) => `<div class="wave-bar" id="wb-${i}" style="animation-delay:${i*0.1}s; height:6px"></div>`).join('')}
+    </div>`;
+
+  function play() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+      osc.start();
+      osc.stop(ctx.currentTime + 1.5);
+      document.querySelectorAll('.wave-bar').forEach(b => b.classList.add('playing'));
+      setTimeout(() => document.querySelectorAll('.wave-bar').forEach(b => b.classList.remove('playing')), 1500);
+    } catch(e) {}
+  }
+
+  setTimeout(play, 300);
+
+  setButtons([
+    { label: '↺ Play again', action: play },
+    { label: 'I didn\'t hear it', action: () => { markResult('fail','No audio heard'); advanceTest(); }},
+    { label: 'Yes, I heard it ✓', primary: true, action: () => { markResult('pass','Speakers working'); advanceTest(); }},
+  ]);
+}
+
+// ── TOUCH ZONES (fullscreen) ──
+function removeOverlay() {
+  const o = document.getElementById('fs-overlay');
+  if (o) {
+    if (typeof o._cleanup === 'function') o._cleanup();
+    o.remove();
+  }
+}
+
+function finishOverlay(then) {
+  removeOverlay();
+  if (typeof then === 'function') then();
+}
+
+function touch(body) {
+  body.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem 0;">Opening fullscreen test...</p>';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fs-overlay';
+  overlay.className = 'fs-overlay';
+  overlay.innerHTML = `
+    <div class="fs-header">
+      <div>
+        <div class="fs-header-title">Tap each corner, then drag</div>
+        <div class="fs-header-sub">Drag the filled circle into the dashed one.</div>
+      </div>
+      <div class="fs-status" id="fs-touch-status">0 / 5 complete</div>
+    </div>
+    <div class="fs-arena" id="fs-touch-arena">
+      <div class="fs-touch-zone" id="fs-tz-tl">↖</div>
+      <div class="fs-touch-zone" id="fs-tz-tr">↗</div>
+      <div class="fs-touch-zone" id="fs-tz-bl">↙</div>
+      <div class="fs-touch-zone" id="fs-tz-br">↘</div>
+      <div class="fs-drag-drop" id="fs-drop">drop here</div>
+      <div class="fs-drag-source" id="fs-source">
+        <div class="fs-drag-tooltip" id="fs-tooltip">Drag me into the other circle</div>
+        <span>⊙</span>
+      </div>
+    </div>
+    <div class="fs-footer" id="fs-touch-footer">
+      <button class="btn btn-sm" id="fs-touch-skip">Skip</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const statusEl = document.getElementById('fs-touch-status');
+  const total = 5;
+  let hits = new Set();
+
+  function complete(zone, label) {
+    if (hits.has(zone)) return;
+    hits.add(zone);
+    statusEl.textContent = `${hits.size} / ${total} complete`;
+    if (hits.size === total) {
+      statusEl.classList.add('pass');
+      statusEl.textContent = 'All complete ✓';
+      markResult('pass', 'Tap & drag passed');
+      const footer = document.getElementById('fs-touch-footer');
+      footer.innerHTML = '';
+      const cont = document.createElement('button');
+      cont.className = 'btn btn-sm btn-primary';
+      cont.textContent = 'Looks good →';
+      cont.onclick = () => finishOverlay(advanceTest);
+      footer.appendChild(cont);
+    }
+  }
+
+  ['tl','tr','bl','br'].forEach(z => {
+    const el = document.getElementById('fs-tz-' + z);
+    const onHit = e => {
+      if (hits.has(z)) return;
+      e.preventDefault();
+      el.classList.add('hit');
+      el.textContent = '✓';
+      complete(z);
+    };
+    el.addEventListener('pointerdown', onHit);
+    el.addEventListener('click', onHit);
+  });
+
+  // ── Drag-to-drop ──
+  const arena = document.getElementById('fs-touch-arena');
+  const source = document.getElementById('fs-source');
+  const drop = document.getElementById('fs-drop');
+  const tooltip = document.getElementById('fs-tooltip');
+
+  let dragging = false;
+  let pointerId = null;
+  let offX = 0, offY = 0;
+
+  function dropCenter() {
+    const r = drop.getBoundingClientRect();
+    return { x: r.left + r.width/2, y: r.top + r.height/2, radius: r.width/2 };
+  }
+  function isOverDrop(x, y) {
+    const c = dropCenter();
+    return Math.sqrt((x - c.x) ** 2 + (y - c.y) ** 2) < c.radius;
+  }
+
+  source.addEventListener('pointerdown', e => {
+    if (hits.has('drag')) return;
+    e.preventDefault();
+    dragging = true;
+    pointerId = e.pointerId;
+    try { source.setPointerCapture(e.pointerId); } catch(_) {}
+    source.classList.add('dragging');
+    if (tooltip) tooltip.style.opacity = '0';
+    const r = source.getBoundingClientRect();
+    offX = e.clientX - (r.left + r.width/2);
+    offY = e.clientY - (r.top + r.height/2);
+  });
+
+  source.addEventListener('pointermove', e => {
+    if (!dragging || e.pointerId !== pointerId) return;
+    e.preventDefault();
+    const ar = arena.getBoundingClientRect();
+    source.style.left = (e.clientX - ar.left - offX) + 'px';
+    source.style.top  = (e.clientY - ar.top  - offY) + 'px';
+    drop.classList.toggle('over', isOverDrop(e.clientX, e.clientY));
+  });
+
+  function endDrag(e) {
+    if (!dragging || e.pointerId !== pointerId) return;
+    dragging = false;
+    source.classList.remove('dragging');
+    try { source.releasePointerCapture(e.pointerId); } catch(_) {}
+    drop.classList.remove('over');
+    if (isOverDrop(e.clientX, e.clientY)) {
+      const ar = arena.getBoundingClientRect();
+      const c = dropCenter();
+      source.style.left = (c.x - ar.left) + 'px';
+      source.style.top  = (c.y - ar.top)  + 'px';
+      source.classList.add('hit');
+      drop.classList.add('hit');
+      drop.textContent = '✓';
+      complete('drag');
+    } else {
+      source.style.left = '';
+      source.style.top  = '';
+      if (tooltip) tooltip.style.opacity = '';
+    }
+  }
+  source.addEventListener('pointerup', endDrag);
+  source.addEventListener('pointercancel', endDrag);
+
+  document.getElementById('fs-touch-skip').onclick = () => {
+    finishOverlay(() => { markResult('skip', 'User skipped'); advanceTest(); });
+  };
+
+  setStatus('', 'Tap & drag in fullscreen...');
+  setButtons([]);
+  timeoutHandle = setTimeout(() => {
+    if (hits.size < total) {
+      finishOverlay(() => { markResult('fail', `${hits.size}/${total} actions completed`); advanceTest(); });
+    }
+  }, 30000);
+}
+
+// ── DRAG (fullscreen) ──
+function drag(body) {
+  body.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem 0;">Opening fullscreen test...</p>';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fs-overlay';
+  overlay.className = 'fs-overlay';
+  overlay.innerHTML = `
+    <div class="fs-header">
+      <div>
+        <div class="fs-header-title">Drag across the screen</div>
+        <div class="fs-header-sub">Press and slide from the left side all the way to the right.</div>
+      </div>
+      <div class="fs-status" id="fs-drag-status">Waiting...</div>
+    </div>
+    <div class="fs-arena">
+      <div id="fs-drag-track">
+        <div class="fs-drag-line-bg"></div>
+        <div id="fs-drag-line"></div>
+        <div class="fs-drag-zone" id="fs-drag-start">start</div>
+        <div class="fs-drag-zone" id="fs-drag-end">end</div>
+        <div id="fs-drag-handle"></div>
+        <div class="fs-drag-hint">Press and drag from left to right</div>
+      </div>
+    </div>
+    <div class="fs-footer" id="fs-drag-footer">
+      <button class="btn btn-sm" id="fs-drag-skip">Skip</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const track = document.getElementById('fs-drag-track');
+  const handle = document.getElementById('fs-drag-handle');
+  const line = document.getElementById('fs-drag-line');
+  const startZone = document.getElementById('fs-drag-start');
+  const endZone = document.getElementById('fs-drag-end');
+  const statusEl = document.getElementById('fs-drag-status');
+
+  let dragging = false;
+  let passed = false;
+
+  function getX(e) {
+    return e.touches ? e.touches[0].clientX : e.clientX;
+  }
+
+  function trackRect() { return track.getBoundingClientRect(); }
+  function leftAnchor() { return 70; }
+  function rightAnchor() { return trackRect().width - 70; }
+
+  handle.style.left = leftAnchor() + 'px';
+
+  let handleX = leftAnchor();
+
+  function onStart(e) {
+    if (passed) return;
+    const rect = trackRect();
+    const x = getX(e) - rect.left;
+    if (Math.abs(x - handleX) < 60 || x <= handleX) {
+      dragging = true;
+      startZone.classList.add('dragging');
+      statusEl.textContent = 'Dragging...';
+      e.preventDefault();
+    }
+  }
+
+  function onMove(e) {
+    if (!dragging || passed) return;
+    e.preventDefault();
+    const rect = trackRect();
+    const min = leftAnchor();
+    const max = rightAnchor();
+    const x = Math.max(min, Math.min(getX(e) - rect.left, max));
+    handleX = x;
+    handle.style.left = x + 'px';
+    line.style.width = Math.max(0, x - min) + 'px';
+    const near = x > max - 60;
+    endZone.classList.toggle('reached', near);
+    if (x >= max - 8) {
+      passed = true;
+      dragging = false;
+      statusEl.classList.add('pass');
+      statusEl.textContent = 'Drag complete ✓';
+      markResult('pass', 'Drag gesture detected');
+      const footer = document.getElementById('fs-drag-footer');
+      footer.innerHTML = '';
+      const cont = document.createElement('button');
+      cont.className = 'btn btn-sm btn-primary';
+      cont.textContent = 'Looks good →';
+      cont.onclick = () => finishOverlay(advanceTest);
+      footer.appendChild(cont);
+    }
+  }
+
+  function onEnd() {
+    if (!passed && dragging) {
+      dragging = false;
+      startZone.classList.remove('dragging');
+    }
+  }
+
+  track.addEventListener('mousedown', onStart);
+  track.addEventListener('touchstart', onStart, { passive: false });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mouseup', onEnd);
+  window.addEventListener('touchend', onEnd);
+
+  overlay._cleanup = () => {
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('touchmove', onMove);
+    window.removeEventListener('mouseup', onEnd);
+    window.removeEventListener('touchend', onEnd);
+  };
+
+  document.getElementById('fs-drag-skip').onclick = () => {
+    finishOverlay(() => { markResult('skip', 'User skipped'); advanceTest(); });
+  };
+
+  setStatus('', 'Drag left → right in fullscreen');
+  setButtons([]);
+  timeoutHandle = setTimeout(() => {
+    if (!passed) {
+      finishOverlay(() => { markResult('fail', 'Drag not completed'); advanceTest(); });
+    }
+  }, 30000);
+}
+
+// ── TRACKPAD (4 corners + drag-to-drop) ──
+function trackpad(body) {
+  body.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem 0;">Opening fullscreen test...</p>';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'fs-overlay';
+  overlay.className = 'fs-overlay';
+  overlay.innerHTML = `
+    <div class="fs-header">
+      <div>
+        <div class="fs-header-title">Click each corner, then drag</div>
+        <div class="fs-header-sub">Drag the filled circle into the dashed one.</div>
+      </div>
+      <div class="fs-status" id="fs-click-status">0 / 5 complete</div>
+    </div>
+    <div class="fs-arena" id="fs-click-arena">
+      <div class="fs-touch-zone" id="fs-tz-tl">↖</div>
+      <div class="fs-touch-zone" id="fs-tz-tr">↗</div>
+      <div class="fs-touch-zone" id="fs-tz-bl">↙</div>
+      <div class="fs-touch-zone" id="fs-tz-br">↘</div>
+      <div class="fs-drag-drop" id="fs-drop">drop here</div>
+      <div class="fs-drag-source" id="fs-source">
+        <div class="fs-drag-tooltip" id="fs-tooltip">Drag me into the other circle</div>
+        <span>⊙</span>
+      </div>
+    </div>
+    <div class="fs-footer" id="fs-click-footer">
+      <button class="btn btn-sm" id="fs-click-skip">Skip</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const statusEl = document.getElementById('fs-click-status');
+  const total = 5;
+  let hits = new Set();
+
+  function complete(zone) {
+    if (hits.has(zone)) return;
+    hits.add(zone);
+    statusEl.textContent = `${hits.size} / ${total} complete`;
+    if (hits.size === total) {
+      statusEl.classList.add('pass');
+      statusEl.textContent = 'All complete ✓';
+      markResult('pass', 'Click & drag passed');
+      const footer = document.getElementById('fs-click-footer');
+      footer.innerHTML = '';
+      const cont = document.createElement('button');
+      cont.className = 'btn btn-sm btn-primary';
+      cont.textContent = 'Looks good →';
+      cont.onclick = () => finishOverlay(advanceTest);
+      footer.appendChild(cont);
+    }
+  }
+
+  ['tl','tr','bl','br'].forEach(z => {
+    const el = document.getElementById('fs-tz-' + z);
+    el.addEventListener('click', () => {
+      if (hits.has(z)) return;
+      el.classList.add('hit');
+      el.textContent = '✓';
+      complete(z);
+    });
+  });
+
+  // ── Drag-to-drop ──
+  const arena = document.getElementById('fs-click-arena');
+  const source = document.getElementById('fs-source');
+  const drop = document.getElementById('fs-drop');
+  const tooltip = document.getElementById('fs-tooltip');
+
+  let dragging = false;
+  let pointerId = null;
+  let offX = 0, offY = 0;
+
+  function dropCenter() {
+    const r = drop.getBoundingClientRect();
+    return { x: r.left + r.width/2, y: r.top + r.height/2, radius: r.width/2 };
+  }
+  function isOverDrop(x, y) {
+    const c = dropCenter();
+    return Math.sqrt((x - c.x) ** 2 + (y - c.y) ** 2) < c.radius;
+  }
+
+  source.addEventListener('pointerdown', e => {
+    if (hits.has('drag')) return;
+    e.preventDefault();
+    dragging = true;
+    pointerId = e.pointerId;
+    try { source.setPointerCapture(e.pointerId); } catch(_) {}
+    source.classList.add('dragging');
+    if (tooltip) tooltip.style.opacity = '0';
+    const r = source.getBoundingClientRect();
+    offX = e.clientX - (r.left + r.width/2);
+    offY = e.clientY - (r.top + r.height/2);
+  });
+
+  source.addEventListener('pointermove', e => {
+    if (!dragging || e.pointerId !== pointerId) return;
+    e.preventDefault();
+    const ar = arena.getBoundingClientRect();
+    source.style.left = (e.clientX - ar.left - offX) + 'px';
+    source.style.top  = (e.clientY - ar.top  - offY) + 'px';
+    drop.classList.toggle('over', isOverDrop(e.clientX, e.clientY));
+  });
+
+  function endDrag(e) {
+    if (!dragging || e.pointerId !== pointerId) return;
+    dragging = false;
+    source.classList.remove('dragging');
+    try { source.releasePointerCapture(e.pointerId); } catch(_) {}
+    drop.classList.remove('over');
+    if (isOverDrop(e.clientX, e.clientY)) {
+      const ar = arena.getBoundingClientRect();
+      const c = dropCenter();
+      source.style.left = (c.x - ar.left) + 'px';
+      source.style.top  = (c.y - ar.top)  + 'px';
+      source.classList.add('hit');
+      drop.classList.add('hit');
+      drop.textContent = '✓';
+      complete('drag');
+    } else {
+      source.style.left = '';
+      source.style.top  = '';
+      if (tooltip) tooltip.style.opacity = '';
+    }
+  }
+  source.addEventListener('pointerup', endDrag);
+  source.addEventListener('pointercancel', endDrag);
+
+  document.getElementById('fs-click-skip').onclick = () => {
+    finishOverlay(() => { markResult('skip', 'User skipped'); advanceTest(); });
+  };
+
+  setStatus('', 'Click & drag in fullscreen...');
+  setButtons([]);
+  timeoutHandle = setTimeout(() => {
+    if (hits.size < total) {
+      finishOverlay(() => { markResult('fail', `${hits.size}/${total} actions completed`); advanceTest(); });
+    }
+  }, 30000);
+}
+
+// ── DIAGNOSTIC HELPERS ──
+function diagIcon(state) {
+  return state === 'ok' ? '✓' : state === 'warn' ? '⚠' : state === 'bad' ? '✕' : '·';
+}
+
+function renderDiagSummary(body, { state, title, line, detailsHTML }) {
+  body.innerHTML = `
+    <div class="diag-summary">
+      <div class="diag-summary-icon ${state}" id="diag-icon">${diagIcon(state)}</div>
+      <div class="diag-summary-title" id="diag-title">${title}</div>
+      <div class="diag-summary-line" id="diag-line">${line || ''}</div>
+      <button class="diag-toggle" id="diag-toggle" type="button">Show details</button>
+    </div>
+    <div class="diag-details" id="diag-details">${detailsHTML || ''}</div>`;
+  document.getElementById('diag-toggle').onclick = () => {
+    const d = document.getElementById('diag-details');
+    const t = document.getElementById('diag-toggle');
+    const open = d.classList.toggle('open');
+    t.textContent = open ? 'Hide details' : 'Show details';
+  };
+}
+
+function updateDiagSummary({ state, title, line }) {
+  const icon = document.getElementById('diag-icon');
+  if (icon && state) {
+    icon.className = 'diag-summary-icon ' + state;
+    icon.textContent = diagIcon(state);
+  }
+  if (title !== undefined) {
+    const t = document.getElementById('diag-title');
+    if (t) t.textContent = title;
+  }
+  if (line !== undefined) {
+    const l = document.getElementById('diag-line');
+    if (l) l.textContent = line;
+  }
+}
+
+// ── BROWSER & DEVICE ──
+function browser(body) {
+  const ua = navigator.userAgent;
+
+  let os = 'Unknown';
+  if (/CrOS/.test(ua)) os = 'ChromeOS';
+  else if (/Mac OS X/.test(ua)) {
+    const m = ua.match(/Mac OS X ([\d_\.]+)/);
+    os = m ? `macOS ${m[1].replace(/_/g, '.')}` : 'macOS';
+  } else if (/Windows NT/.test(ua)) {
+    const m = ua.match(/Windows NT ([\d\.]+)/);
+    const map = { '10.0': '10/11', '6.3': '8.1', '6.2': '8', '6.1': '7' };
+    os = m ? `Windows ${map[m[1]] || m[1]}` : 'Windows';
+  } else if (/Android/.test(ua)) {
+    const m = ua.match(/Android ([\d\.]+)/);
+    os = m ? `Android ${m[1]}` : 'Android';
+  } else if (/iPhone|iPad|iPod/.test(ua)) {
+    const m = ua.match(/OS ([\d_]+) like Mac/);
+    os = m ? `iOS ${m[1].replace(/_/g, '.')}` : 'iOS';
+  } else if (/Linux/.test(ua)) os = 'Linux';
+
+  let browserName = 'Unknown';
+  const edge = ua.match(/Edg\/(\d+)/);
+  const chrome = ua.match(/Chrome\/(\d+)/);
+  const firefox = ua.match(/Firefox\/(\d+)/);
+  const safari = ua.match(/Version\/(\d+).*Safari/);
+  if (edge) browserName = `Edge ${edge[1]}`;
+  else if (firefox) browserName = `Firefox ${firefox[1]}`;
+  else if (chrome) browserName = `Chrome ${chrome[1]}`;
+  else if (safari) browserName = `Safari ${safari[1]}`;
+
+  const screenSize = `${window.screen.width} × ${window.screen.height}`;
+  const viewport = `${window.innerWidth} × ${window.innerHeight}`;
+  const dpr = window.devicePixelRatio || 1;
+  const lang = navigator.language || 'unknown';
+  const cookies = navigator.cookieEnabled;
+  const localStorageOk = (() => {
+    try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); return true; }
+    catch (e) { return false; }
+  })();
+
+  const detailsHTML = `
+    <div class="diag-grid">
+      <div class="diag-row"><span class="diag-label">Operating system</span><span class="diag-value">${os}</span></div>
+      <div class="diag-row"><span class="diag-label">Browser</span><span class="diag-value">${browserName}</span></div>
+      <div class="diag-row"><span class="diag-label">Screen resolution</span><span class="diag-value">${screenSize}</span></div>
+      <div class="diag-row"><span class="diag-label">Window size</span><span class="diag-value">${viewport}</span></div>
+      <div class="diag-row"><span class="diag-label">Pixel ratio</span><span class="diag-value">${dpr}×</span></div>
+      <div class="diag-row"><span class="diag-label">Language</span><span class="diag-value">${lang}</span></div>
+      <div class="diag-row"><span class="diag-label">Cookies</span><span class="diag-value ${cookies ? 'ok' : 'bad'}">${cookies ? 'Enabled' : 'Disabled'}</span></div>
+      <div class="diag-row"><span class="diag-label">Local storage</span><span class="diag-value ${localStorageOk ? 'ok' : 'bad'}">${localStorageOk ? 'Available' : 'Blocked'}</span></div>
+    </div>`;
+
+  const issues = [];
+  if (!cookies) issues.push('cookies disabled');
+  if (!localStorageOk) issues.push('storage blocked');
+
+  if (issues.length === 0) {
+    renderDiagSummary(body, {
+      state: 'ok',
+      title: 'Your browser is ready',
+      line: `${os} · ${browserName}`,
+      detailsHTML
+    });
+    markResult('pass', `${os} · ${browserName}`);
+    setButtons([{ label: 'Looks good →', primary: true, action: advanceTest }]);
+  } else {
+    renderDiagSummary(body, {
+      state: 'bad',
+      title: 'There\'s a browser issue',
+      line: issues.join(', '),
+      detailsHTML
+    });
+    markResult('fail', issues.join(', '));
+    setButtons([{ label: 'Got it →', primary: true, action: advanceTest }]);
+  }
+}
+
+// ── NETWORK ──
+function network(body) {
+  const detailsHTML = `
+    <div class="diag-grid">
+      <div class="diag-row"><span class="diag-label">Online status</span><span class="diag-value muted" id="diag-online">checking...</span></div>
+      <div class="diag-row"><span class="diag-label">Connection type</span><span class="diag-value muted" id="diag-conn">checking...</span></div>
+      <div class="diag-row"><span class="diag-label">Latency to app</span><span class="diag-value muted" id="diag-app">measuring...</span></div>
+      <div class="diag-row"><span class="diag-label">Latency to internet</span><span class="diag-value muted" id="diag-net">measuring...</span></div>
+      <div class="diag-row"><span class="diag-label">Download speed</span><span class="diag-value muted" id="diag-down">measuring...</span></div>
+      <div class="diag-row"><span class="diag-label">Upload speed</span><span class="diag-value muted" id="diag-up">measuring...</span></div>
+    </div>`;
+
+  renderDiagSummary(body, {
+    state: 'loading',
+    title: 'Checking your connection',
+    line: 'Measuring latency...',
+    detailsHTML
+  });
+
+  setStatus('', 'Running network checks...');
+  setButtons([{ label: 'Skip', action: () => { markResult('skip','User skipped'); advanceTest(); }}]);
+
+  const onlineEl = document.getElementById('diag-online');
+  onlineEl.textContent = navigator.onLine ? 'Online' : 'Offline';
+  onlineEl.className = 'diag-value ' + (navigator.onLine ? 'ok' : 'bad');
+
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const connEl = document.getElementById('diag-conn');
+  if (conn) {
+    const parts = [];
+    if (conn.effectiveType) parts.push(conn.effectiveType);
+    if (conn.downlink) parts.push(conn.downlink + ' Mbps');
+    if (conn.rtt) parts.push(conn.rtt + ' ms RTT');
+    connEl.textContent = parts.length ? parts.join(' · ') : 'unknown';
+    connEl.className = 'diag-value';
+  } else {
+    connEl.textContent = 'API unavailable';
+    connEl.className = 'diag-value muted';
+  }
+
+  async function ping(url) {
+    const bust = url + (url.includes('?') ? '&' : '?') + '_=' + Date.now();
+    const start = performance.now();
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 5000);
+    try {
+      await fetch(bust, { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+      return performance.now() - start;
+    } catch (e) {
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function avgPing(url, samples = 3) {
+    const results = [];
+    for (let i = 0; i < samples; i++) {
+      const r = await ping(url);
+      if (r !== null) results.push(r);
+    }
+    if (results.length === 0) return null;
+    return results.reduce((a, b) => a + b, 0) / results.length;
+  }
+
+  function fmt(ms, el) {
+    if (ms === null) {
+      el.textContent = 'unreachable';
+      el.className = 'diag-value bad';
+      return;
+    }
+    el.textContent = `${Math.round(ms)} ms`;
+    el.className = 'diag-value ' + (ms < 200 ? 'ok' : ms < 600 ? 'warn' : 'bad');
+  }
+
+  const appUrl = window.location.origin + '/favicon.ico';
+  const netUrl = 'https://www.google.com/favicon.ico';
+
+  function fmtMbps(bytes, seconds, el) {
+    if (!bytes || !seconds) {
+      el.textContent = 'unavailable';
+      el.className = 'diag-value bad';
+      return null;
+    }
+    const mbps = (bytes * 8) / seconds / 1_000_000;
+    el.textContent = mbps.toFixed(1) + ' Mbps';
+    el.className = 'diag-value ' + (mbps >= 5 ? 'ok' : mbps >= 1.5 ? 'warn' : 'bad');
+    return mbps;
+  }
+
+  async function measureDownload(bytes, timeoutMs) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    const start = performance.now();
+    let received = 0;
+    try {
+      const res = await fetch(`https://speed.cloudflare.com/__down?bytes=${bytes}`, {
+        cache: 'no-store', signal: ctrl.signal,
+      });
+      const reader = res.body.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+      }
+    } catch (e) {
+      // aborted or network error — return whatever we got
+    } finally {
+      clearTimeout(timer);
+    }
+    return { bytes: received, seconds: (performance.now() - start) / 1000 };
+  }
+
+  async function measureUpload(bytes, timeoutMs) {
+    const payload = new Uint8Array(bytes);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    const start = performance.now();
+    try {
+      await fetch('https://speed.cloudflare.com/__up', {
+        method: 'POST', body: payload, cache: 'no-store', signal: ctrl.signal,
+      });
+      return { bytes, seconds: (performance.now() - start) / 1000 };
+    } catch (e) {
+      return { bytes: 0, seconds: 0 };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  (async () => {
+    const [app, net] = await Promise.all([avgPing(appUrl), avgPing(netUrl)]);
+    fmt(app, document.getElementById('diag-app'));
+    fmt(net, document.getElementById('diag-net'));
+
+    updateDiagSummary({ state: 'loading', title: 'Checking your connection', line: 'Measuring bandwidth...' });
+
+    const dl = await measureDownload(10 * 1024 * 1024, 12000);
+    const downMbps = fmtMbps(dl.bytes, dl.seconds, document.getElementById('diag-down'));
+
+    const ul = await measureUpload(5 * 1024 * 1024, 12000);
+    const upMbps = fmtMbps(ul.bytes, ul.seconds, document.getElementById('diag-up'));
+
+    clearTimeout(timeoutHandle);
+
+    const issues = [];
+    if (!navigator.onLine) issues.push('offline');
+    if (net === null && app === null) issues.push('no network');
+    if (app !== null && app > 1500) issues.push('app very slow');
+    if (downMbps !== null && downMbps < 1.5) issues.push('download too slow');
+
+    const slowestPing = Math.max(app || 0, net || 0);
+    const bandwidthLow =
+      (downMbps !== null && downMbps < 5) ||
+      (upMbps !== null && upMbps < 3);
+
+    const bwLine = `${downMbps !== null ? downMbps.toFixed(1) + '↓' : '—'} / ${upMbps !== null ? upMbps.toFixed(1) + '↑' : '—'} Mbps`;
+    const pingLine = `app ${app ? Math.round(app) + 'ms' : '—'} · internet ${net ? Math.round(net) + 'ms' : '—'}`;
+
+    let state, title, line, btnLabel;
+    if (issues.length > 0) {
+      state = 'bad';
+      title = "Your connection isn't working well";
+      line = issues.join(', ');
+      markResult('fail', `${line} · ${bwLine}`);
+      btnLabel = 'Got it →';
+    } else if (slowestPing > 600 || bandwidthLow) {
+      state = 'warn';
+      title = 'Your connection is below the recommended level';
+      line = `${pingLine} · ${bwLine}`;
+      markResult('pass', line);
+      btnLabel = 'Continue anyway →';
+    } else {
+      state = 'ok';
+      title = 'Your connection looks healthy';
+      line = `${pingLine} · ${bwLine}`;
+      markResult('pass', line);
+      btnLabel = 'Looks good →';
+    }
+    updateDiagSummary({ state, title, line });
+    setButtons([{ label: btnLabel, primary: true, action: advanceTest }]);
+  })();
+
+  timeoutHandle = setTimeout(() => {
+    updateDiagSummary({ state: 'bad', title: "We couldn't reach the network", line: 'No response — check your Wi-Fi' });
+    markResult('fail', 'Network checks timed out');
+    setButtons([{ label: 'Got it →', primary: true, action: advanceTest }]);
+  }, 45000);
+}
+
+// ── WEBRTC ──
+function webrtc(body) {
+  const detailsHTML = `
+    <div class="diag-grid">
+      <div class="diag-row"><span class="diag-label">WebRTC support</span><span class="diag-value muted" id="diag-rtc">checking...</span></div>
+      <div class="diag-row"><span class="diag-label">STUN reachable</span><span class="diag-value muted" id="diag-stun">checking...</span></div>
+      <div class="diag-row"><span class="diag-label">Candidate types</span><span class="diag-value muted" id="diag-cand">gathering...</span></div>
+      <div class="diag-row"><span class="diag-label">Public IP detected</span><span class="diag-value muted" id="diag-ip">—</span></div>
+    </div>`;
+
+  renderDiagSummary(body, {
+    state: 'loading',
+    title: 'Checking video calling',
+    line: 'Testing connection to video servers...',
+    detailsHTML
+  });
+
+  setStatus('', 'Testing video call connectivity...');
+  setButtons([{ label: 'Skip', action: () => { markResult('skip','User skipped'); cleanup(); advanceTest(); }}]);
+
+  const rtcEl  = document.getElementById('diag-rtc');
+  const stunEl = document.getElementById('diag-stun');
+  const candEl = document.getElementById('diag-cand');
+  const ipEl   = document.getElementById('diag-ip');
+
+  if (!window.RTCPeerConnection) {
+    rtcEl.textContent = 'Not supported';
+    rtcEl.className = 'diag-value bad';
+    updateDiagSummary({ state: 'bad', title: "Video calls aren't supported", line: 'Your browser is missing video calling features' });
+    markResult('fail', 'WebRTC not supported');
+    setButtons([{ label: 'Got it →', primary: true, action: advanceTest }]);
+    return;
+  }
+  rtcEl.textContent = 'Yes';
+  rtcEl.className = 'diag-value ok';
+
+  let pc;
+  let timer;
+  let resolved = false;
+  const types = new Set();
+
+  function cleanup() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (pc) { try { pc.close(); } catch(e){} pc = null; }
+  }
+
+  body._cleanup = cleanup;
+
+  try {
+    pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+      ],
+    });
+    pc.createDataChannel('probe');
+
+    pc.onicecandidate = e => {
+      if (!e.candidate || resolved) return;
+      const c = e.candidate.candidate || '';
+      const parts = c.split(' ');
+      const typIdx = parts.indexOf('typ');
+      const typ = typIdx >= 0 ? parts[typIdx + 1] : '';
+      if (typ) types.add(typ);
+      candEl.textContent = [...types].join(', ');
+      candEl.className = 'diag-value';
+
+      if (typ === 'srflx') {
+        const ip = parts[4];
+        ipEl.textContent = ip || 'detected';
+        ipEl.className = 'diag-value';
+        stunEl.textContent = 'Yes';
+        stunEl.className = 'diag-value ok';
+        resolved = true;
+        updateDiagSummary({ state: 'ok', title: 'Video calling is ready', line: 'Your network can reach video servers' });
+        markResult('pass', 'STUN reachable · video calling ready');
+        setButtons([{ label: 'Looks good →', primary: true, action: advanceTest }]);
+        cleanup();
+      }
+    };
+
+    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+
+    timer = setTimeout(() => {
+      if (resolved) return;
+      stunEl.textContent = 'No';
+      stunEl.className = 'diag-value bad';
+      const hasOnlyHost = types.size > 0 && [...types].every(t => t === 'host');
+      const summary = hasOnlyHost
+        ? 'your network may be blocking video calls'
+        : "we couldn't reach the video servers";
+      updateDiagSummary({ state: 'bad', title: 'Video calls may not work here', line: summary });
+      markResult('fail', summary);
+      setButtons([{ label: 'Continue anyway →', primary: true, action: advanceTest }]);
+      cleanup();
+    }, 6000);
+  } catch (err) {
+    rtcEl.textContent = 'Error: ' + err.message;
+    rtcEl.className = 'diag-value bad';
+    updateDiagSummary({ state: 'bad', title: "Video calling didn't start", line: 'Something went wrong setting up the test' });
+    markResult('fail', 'WebRTC error: ' + err.message);
+    setButtons([{ label: 'Got it →', primary: true, action: advanceTest }]);
+  }
+}
+
+// ── KEYBOARD ──
+function buildKeyboardLayout() {
+  const letter = (code, label) => ({
+    id: code,
+    label,
+    match: e => e.code === code || (e.key && e.key.toLowerCase() === label.toLowerCase()),
+  });
+  const digit = (code, label) => ({
+    id: code,
+    label,
+    match: e => e.code === code || e.key === label,
+  });
+
+  return [
+    { keys: [
+      digit('Digit1','1'), digit('Digit2','2'), digit('Digit3','3'),
+      digit('Digit4','4'), digit('Digit5','5'), digit('Digit6','6'),
+      digit('Digit7','7'), digit('Digit8','8'), digit('Digit9','9'),
+      digit('Digit0','0'),
+      { id: 'Minus', label: '-', match: e => e.code === 'Minus' || e.key === '-' },
+      { id: 'Backspace', label: '⌫', wide: 'bs', match: e => e.code === 'Backspace' || e.key === 'Backspace' },
+    ]},
+    { keys: [
+      { id: 'Tab', label: 'Tab', wide: 'tab', match: e => e.code === 'Tab' || e.key === 'Tab' },
+      letter('KeyQ','Q'), letter('KeyW','W'), letter('KeyE','E'), letter('KeyR','R'),
+      letter('KeyT','T'), letter('KeyY','Y'), letter('KeyU','U'), letter('KeyI','I'),
+      letter('KeyO','O'), letter('KeyP','P'),
+    ]},
+    { keys: [
+      { id: 'CapsLock', label: 'Caps', wide: 'caps', match: e => e.code === 'CapsLock' || e.key === 'CapsLock' },
+      letter('KeyA','A'), letter('KeyS','S'), letter('KeyD','D'), letter('KeyF','F'),
+      letter('KeyG','G'), letter('KeyH','H'), letter('KeyJ','J'), letter('KeyK','K'),
+      letter('KeyL','L'),
+      { id: 'Enter', label: '↵', wide: 'enter', match: e => e.code === 'Enter' || e.key === 'Enter' || e.code === 'NumpadEnter' },
+    ]},
+    { keys: [
+      { id: 'ShiftLeft', label: '⇧', wide: 'shift', match: e => e.code === 'ShiftLeft' || (e.key === 'Shift' && e.location === 1) },
+      letter('KeyZ','Z'), letter('KeyX','X'), letter('KeyC','C'), letter('KeyV','V'),
+      letter('KeyB','B'), letter('KeyN','N'), letter('KeyM','M'),
+      { id: 'Comma',  label: ',', match: e => e.code === 'Comma'  || e.key === ',' },
+      { id: 'Period', label: '.', match: e => e.code === 'Period' || e.key === '.' || e.code === 'NumpadDecimal' },
+      { id: 'ShiftRight', label: '⇧', wide: 'shift', match: e => e.code === 'ShiftRight' || (e.key === 'Shift' && e.location === 2) },
+    ]},
+    { keys: [
+      { id: 'Space', label: 'Space', wide: 'space', match: e => e.code === 'Space' || e.key === ' ' },
+    ]},
+  ];
+}
+
+function keyboard(body) {
+  const layout = buildKeyboardLayout();
+  const extras = [
+    { id: 'sym-at',    label: '@', match: e => e.key === '@' },
+    { id: 'sym-under', label: '_', match: e => e.key === '_' },
+  ];
+  const allKeys = [...layout.flatMap(r => r.keys), ...extras];
+  let hit = new Set();
+  let passed = false;
+
+  const renderKey = k =>
+    `<div class="kb-key${k.wide ? ' kb-key-' + k.wide : ''}" id="kc-${k.id}">${k.label}</div>`;
+
+  body.innerHTML = `
+    <div class="test-prompt">
+      <h2 class="test-prompt-heading" id="kb-heading">Press every key shown below</h2>
+      <p class="test-prompt-sub" id="kb-sub">0 of ${allKeys.length} pressed</p>
+    </div>
+    <div class="kb-layout">
+      ${layout.map(row => `<div class="kb-row">${row.keys.map(renderKey).join('')}</div>`).join('')}
+      <div class="kb-extras">
+        <span class="kb-extras-label">Email symbols:</span>
+        ${extras.map(renderKey).join('')}
+      </div>
+    </div>
+    <input id="key-input-field" type="text" autocomplete="off">`;
+
+  const heading = body.querySelector('#kb-heading');
+  const sub = body.querySelector('#kb-sub');
+  const field = document.getElementById('key-input-field');
+  field.focus();
+
+  function register(id) {
+    if (hit.has(id)) return;
+    hit.add(id);
+    const chip = document.getElementById('kc-' + id);
+    if (chip) chip.classList.add('hit');
+    if (passed) return;
+    sub.textContent = `${hit.size} of ${allKeys.length} pressed`;
+    if (hit.size === allKeys.length) {
+      passed = true;
+      heading.textContent = 'All keys are working ✓';
+      sub.textContent = 'Every key registered correctly.';
+      markResult('pass', `${hit.size}/${allKeys.length} keys verified`);
+      setButtons([{ label: 'Looks good →', primary: true, action: advanceTest }]);
+    }
+  }
+
+  const handler = e => {
+    let matched = false;
+    for (const def of allKeys) {
+      if (def.match(e)) {
+        register(def.id);
+        matched = true;
+      }
+    }
+    const blockDefault = matched
+      || e.code === 'Tab' || e.key === 'Tab'
+      || e.code === 'Backspace' || e.key === 'Backspace'
+      || e.code === 'Space' || e.key === ' '
+      || e.code === 'Enter' || e.key === 'Enter';
+    if (blockDefault) e.preventDefault();
+  };
+  document.addEventListener('keydown', handler, true);
+  body._cleanup = () => document.removeEventListener('keydown', handler, true);
+
+  setButtons([
+    { label: 'Skip this', action: () => { markResult('skip','User skipped'); advanceTest(); }}
+  ]);
+  timeoutHandle = setTimeout(() => {
+    if (!passed) {
+      markResult('fail', `Only ${hit.size}/${allKeys.length} keys detected`);
+      advanceTest();
+    }
+  }, 120000);
+}
+
+// ── RESULTS ──
+function showResults() {
+  stopStreams();
+  showScreen('results');
+
+  const active = TESTS.filter(t => !(t.skipIfNoTouch && !touchSupported));
+  const total = active.length;
+  const passed = active.filter(t => results[t.id]?.status === 'pass').length;
+  const failed = active.filter(t => results[t.id]?.status === 'fail').length;
+
+  const scoreEl = document.getElementById('results-score');
+  scoreEl.textContent = `${passed}/${total}`;
+  scoreEl.className = 'results-score ' + (failed === 0 ? 'all-pass' : 'has-fail');
+
+  const tagEl = document.getElementById('results-tagline');
+  tagEl.textContent = failed === 0
+    ? 'All checks passed — your device is ready.'
+    : `${failed} issue${failed > 1 ? 's' : ''} found. A tech support team member can help.`;
+
+  const list = document.getElementById('results-list');
+  list.innerHTML = '';
+  active.forEach(t => {
+    const r = results[t.id] || { status: 'skip', label: 'Not run' };
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    const icons = { pass: '✓', fail: '✕', skip: '—' };
+    const badges = { pass: 'badge-pass', fail: 'badge-fail', skip: 'badge-skip' };
+    const btext = { pass: 'PASS', fail: 'FAIL', skip: 'SKIP' };
+    row.innerHTML = `
+      <span class="result-icon" style="color:${r.status==='pass'?'var(--green)':r.status==='fail'?'var(--red)':'var(--amber)'}">${icons[r.status]}</span>
+      <span class="result-name">${t.icon} ${t.name}</span>
+      <span class="result-badge ${badges[r.status]}">${btext[r.status]}</span>`;
+    list.appendChild(row);
+  });
+}
+
+function restartTests() {
+  currentTest = 0;
+  results = {};
+  showScreen('test');
+  runTest(0);
+}
+
+function showWelcome() {
+  stopStreams();
+  showScreen('welcome');
+}
+
+touchSupported = hasTouchScreen();
+</script>
+</body>
+</html>
