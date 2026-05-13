@@ -7,7 +7,7 @@ import { showScreen } from './ui/screens.js';
 import { updateProgress } from './ui/progress.js';
 import { setStatus, setButtons } from './ui/footer.js';
 import { renderTestSelector, getSelectedIds } from './ui/welcome.js';
-import { showResults } from './results.js';
+import { showResults } from './ui/results.js';
 
 const ADVANCE_DELAY_MS = 350;
 
@@ -94,18 +94,12 @@ function restartTests() {
   runTest(0);
 }
 
-function showWelcome() {
-  state.cleanup.run();
-  showScreen('welcome');
-}
-
 function bindWelcome() {
   renderTestSelector(TESTS, STAGE_GROUPS, state.touchSupported, (anySelected) => {
     document.getElementById('welcome-start').disabled = !anySelected;
   });
   document.getElementById('welcome-start').addEventListener('click', startTests);
   document.getElementById('results-restart').addEventListener('click', restartTests);
-  document.getElementById('results-done').addEventListener('click', showWelcome);
 }
 
 bindWelcome();
