@@ -7,6 +7,7 @@ import speaker from './speaker.js';
 import touch from './touch.js';
 import drag from './drag.js';
 import trackpad from './trackpad.js';
+import trackpadDrag from './trackpad-drag.js';
 import keyboard from './keyboard.js';
 
 /**
@@ -25,6 +26,7 @@ export const TESTS = [
   touch,
   drag,
   trackpad,
+  trackpadDrag,
   keyboard,
 ];
 
@@ -34,5 +36,5 @@ export const TESTS = [
 export const STAGE_GROUPS = [
   { label: 'Connectivity', ids: ['browser', 'network', 'webrtc'] },
   { label: 'Hardware', ids: ['webcam', 'mic', 'speaker'] },
-  { label: 'Input', ids: ['touch', 'drag', 'trackpad', 'keyboard'] },
+  { label: 'Input', ids: ['touch', 'drag', 'trackpad', 'trackpad-drag', 'keyboard'] },
 ];

@@ -1,20 +1,18 @@
-import { runCornersAndDrag } from './_corners-drag.js';
+import { runCorners } from './_corners.js';
 
 export default {
   id: 'trackpad',
   icon: '⬛',
-  name: 'Trackpad / Mouse',
-  instruction: 'Click each of the four corners, then drag the circle into the target.',
+  name: 'Trackpad / Touchscreen (click)',
+  instruction: 'Click each labeled zone — corners first or center first, order doesn’t matter.',
   run(ctx) {
-    runCornersAndDrag(
+    runCorners(
       {
-        title: 'Click each corner, then drag',
-        subtitle: 'Drag the filled circle into the dashed one.',
-        statusPrefix: 'Click & drag in fullscreen...',
-        tooltipText: 'Drag me into the other circle',
-        successLabel: 'Click & drag passed',
-        failPrefix: '',
-        usePointerCornerDown: false,
+        title: 'Click each zone',
+        subtitle: 'Click A, B, C, D, and E in any order.',
+        statusPrefix: 'Click in fullscreen...',
+        successLabel: 'All click zones registered',
+        usePointerDown: false,
       },
       ctx,
     );

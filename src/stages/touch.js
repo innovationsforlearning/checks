@@ -1,21 +1,19 @@
-import { runCornersAndDrag } from './_corners-drag.js';
+import { runCorners } from './_corners.js';
 
 export default {
   id: 'touch',
   icon: '👆',
-  name: 'Touchscreen (tap & drag)',
-  instruction: 'Tap each of the four corners, then drag the circle into the target.',
+  name: 'Touchscreen (tap)',
+  instruction: 'Tap each labeled zone — corners first or center first, order doesn’t matter.',
   skipIfNoTouch: true,
   run(ctx) {
-    runCornersAndDrag(
+    runCorners(
       {
-        title: 'Tap each corner, then drag',
-        subtitle: 'Drag the filled circle into the dashed one.',
-        statusPrefix: 'Tap & drag in fullscreen...',
-        tooltipText: 'Drag me into the other circle',
-        successLabel: 'Tap & drag passed',
-        failPrefix: '',
-        usePointerCornerDown: true,
+        title: 'Tap each zone',
+        subtitle: 'Tap A, B, C, D, and E in any order.',
+        statusPrefix: 'Tap in fullscreen...',
+        successLabel: 'All tap zones registered',
+        usePointerDown: true,
       },
       ctx,
     );

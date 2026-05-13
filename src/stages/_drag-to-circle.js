@@ -1,7 +1,6 @@
 import { mountOverlay, finishOverlay } from '../ui/overlay.js';
 
 const STAGE_TIMEOUT_MS = 30000;
-const TOTAL_HITS = 5; // 4 corners + 1 drag
 
 function dropCenter(drop) {
   const r = drop.getBoundingClientRect();
@@ -14,8 +13,8 @@ function isOverDrop(drop, x, y) {
 }
 
 /**
- * Renders a fullscreen 4-corner + drag-to-drop test.
- * Used by both the touchscreen and trackpad/mouse stages.
+ * Fullscreen drag-to-drop test — drag the filled circle onto the dashed target.
+ * Shared between the touchscreen and trackpad/mouse drag stages.
  *
  * @param {object} opts
  * @param {string} opts.title             Header title.
@@ -23,27 +22,22 @@ function isOverDrop(drop, x, y) {
  * @param {string} opts.statusPrefix      Test-area footer status text.
  * @param {string} opts.tooltipText       Drag tooltip text.
  * @param {string} opts.successLabel      markResult label on success.
- * @param {string} opts.failPrefix        Used in fail label: `${prefix} ${hits}/${total} ...`.
- * @param {boolean} opts.usePointerCornerDown  If true, listen to pointerdown on corners (for touch).
+ * @param {string} opts.failLabel         markResult label on timeout/skip-fail.
  * @param {object} ctx                    Stage context.
  */
-export function runCornersAndDrag(opts, ctx) {
+export function runDragToCircle(opts, ctx) {
   ctx.body.innerHTML =
     '<p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem 0;">Opening fullscreen test...</p>';
 
-  const overlay = mountOverlay(`
+  mountOverlay(`
     <div class="fs-header">
       <div>
         <div class="fs-header-title">${opts.title}</div>
         <div class="fs-header-sub">${opts.subtitle}</div>
       </div>
-      <div class="fs-status" id="fs-status">0 / ${TOTAL_HITS} complete</div>
+      <div class="fs-status" id="fs-status">Waiting...</div>
     </div>
     <div class="fs-arena" id="fs-arena">
-      <div class="fs-touch-zone" id="fs-tz-tl">↖</div>
-      <div class="fs-touch-zone" id="fs-tz-tr">↗</div>
-      <div class="fs-touch-zone" id="fs-tz-bl">↙</div>
-      <div class="fs-touch-zone" id="fs-tz-br">↘</div>
       <div class="fs-drag-drop" id="fs-drop">drop here</div>
       <div class="fs-drag-source" id="fs-source">
         <div class="fs-drag-tooltip" id="fs-tooltip">${opts.tooltipText}</div>
@@ -55,39 +49,6 @@ export function runCornersAndDrag(opts, ctx) {
     </div>`);
 
   const statusEl = document.getElementById('fs-status');
-  const hits = new Set();
-
-  function complete(zone) {
-    if (hits.has(zone)) return;
-    hits.add(zone);
-    statusEl.textContent = `${hits.size} / ${TOTAL_HITS} complete`;
-    if (hits.size === TOTAL_HITS) {
-      statusEl.classList.add('pass');
-      statusEl.textContent = 'All complete ✓';
-      ctx.markResult('pass', opts.successLabel);
-      const footer = document.getElementById('fs-footer');
-      footer.innerHTML = '';
-      const cont = document.createElement('button');
-      cont.className = 'btn btn-sm btn-primary';
-      cont.textContent = 'Looks good →';
-      cont.onclick = () => finishOverlay(ctx.advance);
-      footer.appendChild(cont);
-    }
-  }
-
-  ['tl', 'tr', 'bl', 'br'].forEach((z) => {
-    const el = document.getElementById('fs-tz-' + z);
-    const onHit = (e) => {
-      if (hits.has(z)) return;
-      e.preventDefault();
-      el.classList.add('hit');
-      el.textContent = '✓';
-      complete(z);
-    };
-    if (opts.usePointerCornerDown) el.addEventListener('pointerdown', onHit);
-    el.addEventListener('click', onHit);
-  });
-
   const arena = document.getElementById('fs-arena');
   const source = document.getElementById('fs-source');
   const drop = document.getElementById('fs-drop');
@@ -97,9 +58,28 @@ export function runCornersAndDrag(opts, ctx) {
   let pointerId = null;
   let offX = 0;
   let offY = 0;
+  let passed = false;
+
+  function pass() {
+    if (passed) return;
+    passed = true;
+    source.classList.add('hit');
+    drop.classList.add('hit');
+    drop.textContent = '✓';
+    statusEl.classList.add('pass');
+    statusEl.textContent = 'Drag complete ✓';
+    ctx.markResult('pass', opts.successLabel);
+    const footer = document.getElementById('fs-footer');
+    footer.innerHTML = '';
+    const cont = document.createElement('button');
+    cont.className = 'btn btn-sm btn-primary';
+    cont.textContent = 'Looks good →';
+    cont.onclick = () => finishOverlay(ctx.advance);
+    footer.appendChild(cont);
+  }
 
   source.addEventListener('pointerdown', (e) => {
-    if (hits.has('drag')) return;
+    if (passed) return;
     e.preventDefault();
     dragging = true;
     pointerId = e.pointerId;
@@ -107,6 +87,7 @@ export function runCornersAndDrag(opts, ctx) {
       source.setPointerCapture(e.pointerId);
     } catch {}
     source.classList.add('dragging');
+    statusEl.textContent = 'Dragging...';
     if (tooltip) tooltip.style.opacity = '0';
     const r = source.getBoundingClientRect();
     offX = e.clientX - (r.left + r.width / 2);
@@ -135,13 +116,11 @@ export function runCornersAndDrag(opts, ctx) {
       const c = dropCenter(drop);
       source.style.left = c.x - ar.left + 'px';
       source.style.top = c.y - ar.top + 'px';
-      source.classList.add('hit');
-      drop.classList.add('hit');
-      drop.textContent = '✓';
-      complete('drag');
+      pass();
     } else {
       source.style.left = '';
       source.style.top = '';
+      statusEl.textContent = 'Waiting...';
       if (tooltip) tooltip.style.opacity = '';
     }
   }
@@ -159,9 +138,9 @@ export function runCornersAndDrag(opts, ctx) {
   ctx.setButtons([]);
 
   const stageTimer = setTimeout(() => {
-    if (hits.size < TOTAL_HITS) {
+    if (!passed) {
       finishOverlay(() => {
-        ctx.markResult('fail', `${opts.failPrefix} ${hits.size}/${TOTAL_HITS} actions completed`);
+        ctx.markResult('fail', opts.failLabel);
         ctx.advance();
       });
     }
