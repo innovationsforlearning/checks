@@ -1,11 +1,12 @@
 import './styles/index.css';
 
-import { TESTS } from './stages/index.js';
+import { TESTS, STAGE_GROUPS } from './stages/index.js';
 import { createCleanupBag } from './lib/cleanup.js';
 import { hasTouchScreen } from './lib/touch.js';
 import { showScreen } from './ui/screens.js';
 import { updateProgress } from './ui/progress.js';
 import { setStatus, setButtons } from './ui/footer.js';
+import { renderTestSelector, getSelectedIds } from './ui/welcome.js';
 import { showResults } from './results.js';
 
 const ADVANCE_DELAY_MS = 350;
@@ -15,10 +16,16 @@ const state = {
   results: {},
   touchSupported: hasTouchScreen(),
   cleanup: createCleanupBag(),
+  activeTests: TESTS,
 };
 
 function startTests() {
   state.touchSupported = hasTouchScreen();
+  const selected = getSelectedIds();
+  state.activeTests = TESTS.filter(
+    (t) => selected.has(t.id) && !(t.skipIfNoTouch && !state.touchSupported),
+  );
+  if (state.activeTests.length === 0) return;
   state.index = 0;
   state.results = {};
   showScreen('test');
@@ -46,19 +53,13 @@ function buildContext(test, body) {
 function runTest(index) {
   state.cleanup.run();
 
-  const test = TESTS[index];
+  const test = state.activeTests[index];
   if (!test) {
-    showResults(TESTS, state.results, state.touchSupported);
+    showResults(state.activeTests, state.results);
     return;
   }
 
-  if (test.skipIfNoTouch && !state.touchSupported) {
-    state.results[test.id] = { status: 'skip', label: 'No touchscreen detected' };
-    advanceTest();
-    return;
-  }
-
-  updateProgress(TESTS, index, state.touchSupported);
+  updateProgress(state.activeTests, index);
   document.getElementById('test-title').textContent = test.name;
   document.getElementById('test-instruction').textContent = test.instruction;
 
@@ -99,6 +100,9 @@ function showWelcome() {
 }
 
 function bindWelcome() {
+  renderTestSelector(TESTS, STAGE_GROUPS, state.touchSupported, (anySelected) => {
+    document.getElementById('welcome-start').disabled = !anySelected;
+  });
   document.getElementById('welcome-start').addEventListener('click', startTests);
   document.getElementById('results-restart').addEventListener('click', restartTests);
   document.getElementById('results-done').addEventListener('click', showWelcome);

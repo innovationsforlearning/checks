@@ -27,3 +27,12 @@ export const TESTS = [
   trackpad,
   keyboard,
 ];
+
+// Groups drive the welcome-screen checklist. Each entry lists stage ids in
+// the order they should appear in that group; flattening the groups must
+// yield the same ordering as TESTS so the run sequence stays predictable.
+export const STAGE_GROUPS = [
+  { label: 'Connectivity', ids: ['browser', 'network', 'webrtc'] },
+  { label: 'Hardware', ids: ['webcam', 'mic', 'speaker'] },
+  { label: 'Input', ids: ['touch', 'drag', 'trackpad', 'keyboard'] },
+];

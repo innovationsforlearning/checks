@@ -4,10 +4,10 @@ const ICONS = { pass: '✓', fail: '✕', skip: '—' };
 const BADGES = { pass: 'badge-pass', fail: 'badge-fail', skip: 'badge-skip' };
 const BADGE_TEXT = { pass: 'PASS', fail: 'FAIL', skip: 'SKIP' };
 
-export function showResults(tests, results, touchSupported) {
+export function showResults(tests, results) {
   showScreen('results');
 
-  const active = tests.filter((t) => !(t.skipIfNoTouch && !touchSupported));
+  const active = tests;
   const total = active.length;
   const passed = active.filter((t) => results[t.id]?.status === 'pass').length;
   const failed = active.filter((t) => results[t.id]?.status === 'fail').length;
