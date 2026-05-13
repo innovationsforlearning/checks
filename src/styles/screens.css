@@ -31,7 +31,8 @@
 }
 .test-title {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text);
   margin-bottom: 4px;
 }
 .test-instruction {
@@ -74,8 +75,10 @@
 }
 .test-prompt-heading {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text);
   margin-bottom: 6px;
+  letter-spacing: -0.01em;
 }
 .test-prompt-sub {
   color: var(--muted);
@@ -94,12 +97,14 @@
   margin-bottom: 6px;
 }
 .progress-track {
-  height: 2px;
-  background: var(--border);
+  height: 4px;
+  background: var(--sand-300);
+  border-radius: 999px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--bg-primary);
+  border-radius: 999px;
   transition: width 0.3s ease;
 }

@@ -7,28 +7,89 @@
 }
 
 :root {
-  --bg: #ffffff;
-  --surface: #f7f7f8;
-  --surface2: #f0f0f2;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --text: #111827;
-  --muted: #6b7280;
-  --accent: #111827;
-  --green: #16a34a;
-  --green-bg: #dcfce7;
-  --red: #dc2626;
-  --red-bg: #fee2e2;
-  --amber: #d97706;
-  --amber-bg: #fef3c7;
+  /* Sand — warm neutrals (page bg, surfaces, borders) */
+  --sand-50: #fcfbf8;
+  --sand-100: #f9f8f4;
+  --sand-200: #f5f3ed;
+  --sand-300: #edebe4;
+  --sand-400: #e6e4da;
+  --sand-500: #d4d1c5;
+  --sand-600: #bdbaab;
+  --sand-700: #858171;
+  --sand-800: #666250;
+  --sand-900: #3b3829;
+  --sand-950: #211e10;
+
+  /* Yellow — accent */
+  --yellow-300: #fff5c9;
+  --yellow-400: #ffe578;
+  --yellow-500: #ffd72b;
+  --yellow-600: #fccc00;
+  --yellow-700: #dbb200;
+
+  /* Status / semantic */
+  --emerald-50: #ecfdf5;
+  --emerald-500: #10b981;
+  --emerald-600: #059669;
+  --emerald-700: #047857;
+  --emerald-800: #065f46;
+
+  --red-50: #fef2f2;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+
+  --amber-50: #fffbeb;
+  --amber-600: #d97706;
+  --amber-700: #b45309;
+
+  /* Semantic surface tokens */
+  --bg-low: var(--sand-200);
+  --bg-high: var(--sand-50);
+  --bg-highest: #ffffff;
+  --bg-tablerow-hover: var(--sand-300);
+
+  --text: var(--sand-900);
+  --text-secondary: var(--sand-800);
+  --text-muted: var(--sand-700);
+
+  --border-primary: var(--sand-500);
+  --border-secondary: var(--sand-400);
+
+  --shadow-light: var(--sand-400);
+  --shadow-mid: var(--sand-500);
+
+  /* Primary action — forest green per IP design system */
+  --bg-primary: var(--emerald-800);
+  --bg-primary-hover: var(--emerald-700);
+  --border-primary-action: var(--emerald-700);
+  --text-on-primary: #ffffff;
+
+  /* Status bg/fg used by diag values, badges, status labels */
+  --green: var(--emerald-700);
+  --green-bg: var(--emerald-50);
+  --red: var(--red-600);
+  --red-bg: var(--red-50);
+  --amber: var(--amber-600);
+  --amber-bg: var(--amber-50);
+
+  /* Legacy aliases — older selectors still reference these */
+  --bg: var(--bg-low);
+  --surface: var(--bg-high);
+  --surface2: var(--sand-300);
+  --border: var(--sand-400);
+  --border-strong: var(--sand-500);
+  --muted: var(--text-muted);
+  --accent: var(--bg-primary);
 }
 
 html,
 body {
   height: 100%;
-  background: var(--bg);
   color: var(--text);
+  background: linear-gradient(180deg, var(--sand-100) -1.76%, var(--sand-200) 72.59%);
+  background-attachment: fixed;
   font-family:
+    'AtkinsonHyperlegible',
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -51,58 +112,100 @@ body {
   gap: 1.5rem;
 }
 
-.logo {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  color: var(--muted);
+.brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
-.logo span {
-  color: var(--text);
+.brand-logo {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+.brand-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--sand-400);
+}
+.brand-tagline {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+  align-self: center;
+  text-transform: uppercase;
 }
 
 h1 {
   font-size: 2rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text);
   margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
 }
 .subtitle {
-  color: var(--muted);
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   max-width: 640px;
 }
 
+/* ── Buttons — flat offset shadow per IP design ── */
 .btn {
   font: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 9px 18px;
-  border: 1px solid var(--border-strong);
-  background: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  background: var(--bg-high);
   color: var(--text);
   cursor: pointer;
+  box-shadow: 0 2px 0 0 var(--shadow-light);
   transition:
-    background 0.1s,
-    border-color 0.1s;
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    background 0.1s ease,
+    border-color 0.1s ease;
 }
 .btn:hover {
-  background: var(--surface);
+  background: var(--sand-100);
+  border-color: var(--sand-700);
 }
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 0 var(--shadow-light);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--emerald-500);
+  outline-offset: 2px;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
+  background: var(--bg-primary);
+  border-color: var(--border-primary-action);
+  color: var(--text-on-primary);
+  box-shadow: 0 2px 0 0 var(--emerald-800);
 }
 .btn-primary:hover {
-  background: #000;
-  border-color: #000;
+  background: var(--bg-primary-hover);
+  border-color: var(--bg-primary-hover);
 }
+.btn-primary:active {
+  box-shadow: 0 0 0 0 var(--emerald-800);
+}
+
 .btn-sm {
-  padding: 7px 14px;
-  font-size: 0.85rem;
+  padding: 8px 16px;
+  font-size: 0.875rem;
 }
+
 .btn-group {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .fade-in {

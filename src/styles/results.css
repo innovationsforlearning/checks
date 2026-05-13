@@ -3,9 +3,10 @@
 }
 .results-score {
   font-size: 4rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
   margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
 }
 .results-score.all-pass {
   color: var(--green);
@@ -39,7 +40,9 @@
 .result-badge {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.7rem;
+  font-weight: 700;
   padding: 4px 10px;
+  border-radius: 999px;
   letter-spacing: 0.05em;
 }
 .badge-pass {
