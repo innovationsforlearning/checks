@@ -134,7 +134,7 @@ function describeConnection() {
 export default {
   id: 'network',
   icon: '🌐',
-  name: 'Network',
+  name: 'Internet connection',
   instruction: 'Measuring connection latency, reachability, and bandwidth.',
   run(ctx) {
     const detailsHTML = `

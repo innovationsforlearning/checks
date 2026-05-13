@@ -48,7 +48,7 @@ function checkLocalStorage() {
 export default {
   id: 'browser',
   icon: '💻',
-  name: 'Browser & device',
+  name: 'Resolution & device compatibility',
   instruction: 'Capturing your browser and operating system info — useful for support.',
   run(ctx) {
     const ua = navigator.userAgent;
