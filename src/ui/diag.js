@@ -2,12 +2,17 @@ function diagIcon(state) {
   return state === 'ok' ? '✓' : state === 'warn' ? '⚠' : state === 'bad' ? '✕' : '·';
 }
 
-export function renderDiagSummary(body, { state, title, line, detailsHTML }) {
+// The summary card shows the state icon, title, and a plain-language
+// description of what that state means. Per-stage technical details live in
+// `detailsHTML`, revealed via the "Show details" toggle. Stages still pass a
+// `line` to the summary helpers so existing call sites keep working — it's
+// recorded with markResult but not surfaced on the card.
+export function renderDiagSummary(body, { state, title, description, detailsHTML }) {
   body.innerHTML = `
     <div class="diag-summary">
       <div class="diag-summary-icon ${state}" id="diag-icon">${diagIcon(state)}</div>
       <div class="diag-summary-title" id="diag-title">${title}</div>
-      <div class="diag-summary-line" id="diag-line">${line || ''}</div>
+      <div class="diag-summary-description" id="diag-description">${description || ''}</div>
       <button class="diag-toggle" id="diag-toggle" type="button">Show details</button>
     </div>
     <div class="diag-details" id="diag-details">${detailsHTML || ''}</div>`;
@@ -19,7 +24,7 @@ export function renderDiagSummary(body, { state, title, line, detailsHTML }) {
   };
 }
 
-export function updateDiagSummary({ state, title, line }) {
+export function updateDiagSummary({ state, title, description }) {
   const icon = document.getElementById('diag-icon');
   if (icon && state) {
     icon.className = 'diag-summary-icon ' + state;
@@ -29,8 +34,8 @@ export function updateDiagSummary({ state, title, line }) {
     const t = document.getElementById('diag-title');
     if (t) t.textContent = title;
   }
-  if (line !== undefined) {
-    const l = document.getElementById('diag-line');
-    if (l) l.textContent = line;
+  if (description !== undefined) {
+    const d = document.getElementById('diag-description');
+    if (d) d.textContent = description;
   }
 }

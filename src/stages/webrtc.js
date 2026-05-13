@@ -6,6 +6,12 @@ const STUN_SERVERS = [
 ];
 const STAGE_TIMEOUT_MS = 6000;
 
+const DESCRIPTIONS = {
+  ok: 'Your network lets your browser open direct video and audio connections, so live class will work end-to-end.',
+  bad: 'Something on your network — usually a firewall, VPN, or strict school policy — is blocking the connections live video calls need. You may see a black screen or no audio in class.',
+  unsupported: 'This browser is missing the live video and audio features needed for class. Try a current version of Chrome, Edge, Safari, or Firefox.',
+};
+
 export default {
   id: 'webrtc',
   icon: '📡',
@@ -23,6 +29,7 @@ export default {
     renderDiagSummary(ctx.body, {
       state: 'loading',
       title: 'Checking video calling',
+      description: 'Confirming your network allows the live video and audio connections class needs.',
       line: 'Testing connection to video servers...',
       detailsHTML,
     });
@@ -40,7 +47,7 @@ export default {
       updateDiagSummary({
         state: 'bad',
         title: "Video calls aren't supported",
-        line: 'Your browser is missing video calling features',
+        description: DESCRIPTIONS.unsupported,
       });
       ctx.markResult('fail', 'WebRTC not supported');
       ctx.setButtons([{ label: 'Got it →', primary: true, action: ctx.advance }]);
@@ -97,7 +104,7 @@ export default {
           updateDiagSummary({
             state: 'ok',
             title: 'Video calling is ready',
-            line: 'Your network can reach video servers',
+            description: DESCRIPTIONS.ok,
           });
           ctx.markResult('pass', 'STUN reachable · video calling ready');
           ctx.setButtons([{ label: 'Looks good →', primary: true, action: ctx.advance }]);
@@ -118,7 +125,7 @@ export default {
         updateDiagSummary({
           state: 'bad',
           title: 'Video calls may not work here',
-          line: summary,
+          description: DESCRIPTIONS.bad,
         });
         ctx.markResult('fail', summary);
         ctx.setButtons([{ label: 'Continue anyway →', primary: true, action: ctx.advance }]);
@@ -131,7 +138,7 @@ export default {
       updateDiagSummary({
         state: 'bad',
         title: "Video calling didn't start",
-        line: 'Something went wrong setting up the test',
+        description: DESCRIPTIONS.bad,
       });
       ctx.markResult('fail', 'WebRTC error: ' + err.message);
       ctx.setButtons([{ label: 'Got it →', primary: true, action: ctx.advance }]);

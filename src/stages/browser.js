@@ -81,16 +81,20 @@ export default {
       renderDiagSummary(ctx.body, {
         state: 'ok',
         title: 'Your browser is ready',
-        line: `${os} · ${browserName}`,
+        description:
+          'Your browser supports everything class needs and can remember your sign-in and progress between sessions.',
         detailsHTML,
       });
       ctx.markResult('pass', `${os} · ${browserName}`);
       ctx.setButtons([{ label: 'Looks good →', primary: true, action: ctx.advance }]);
     } else {
+      const description = !cookies
+        ? "Cookies are turned off, so your browser can't keep you signed in. You'll likely be kicked out of class or have to log in over and over."
+        : "Your browser can't save data locally, so progress and preferences won't stick between sessions.";
       renderDiagSummary(ctx.body, {
         state: 'bad',
         title: "There's a browser issue",
-        line: issues.join(', '),
+        description,
         detailsHTML,
       });
       ctx.markResult('fail', issues.join(', '));
