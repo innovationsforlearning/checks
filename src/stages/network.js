@@ -7,11 +7,20 @@ const UPLOAD_BYTES = 5 * 1024 * 1024;
 const BANDWIDTH_TIMEOUT_MS = 12000;
 const STAGE_TIMEOUT_MS = 45000;
 
-const HEALTHY_DOWN_MBPS = 5;
+const HEALTHY_DOWN_MBPS = 10;
 const HEALTHY_UP_MBPS = 3;
+const WEAK_DOWN_MBPS = 3;
+const WEAK_UP_MBPS = 1;
 const FAIL_DOWN_MBPS = 1.5;
-const SLOW_PING_MS = 600;
+const HEALTHY_PING_MS = 150;
+const SLOW_PING_MS = 400;
 const FAIL_APP_PING_MS = 1500;
+
+const DESCRIPTIONS = {
+  ok: 'Video calls, screen sharing, and uploads should all run smoothly. Pages will load quickly and audio should stay clear.',
+  warn: 'Video calls should still work, but expect occasional choppiness, lower video quality, or slower uploads when others are online with you.',
+  bad: 'Video calls will likely freeze, drop out, or fail to connect. You may also have trouble loading pages or signing in.',
+};
 
 const APP_PING_URL = window.location.origin + '/favicon.ico';
 const NET_PING_URL = 'https://www.google.com/favicon.ico';
@@ -50,10 +59,11 @@ function fmtPing(ms, el) {
     return;
   }
   el.textContent = `${Math.round(ms)} ms`;
-  el.className = 'diag-value ' + (ms < 200 ? 'ok' : ms < SLOW_PING_MS ? 'warn' : 'bad');
+  el.className =
+    'diag-value ' + (ms < HEALTHY_PING_MS ? 'ok' : ms < SLOW_PING_MS ? 'warn' : 'bad');
 }
 
-function fmtMbps(bytes, seconds, el) {
+function fmtMbps(bytes, seconds, el, healthyThreshold, weakThreshold) {
   if (!bytes || !seconds) {
     el.textContent = 'unavailable';
     el.className = 'diag-value bad';
@@ -62,7 +72,8 @@ function fmtMbps(bytes, seconds, el) {
   const mbps = (bytes * 8) / seconds / 1_000_000;
   el.textContent = mbps.toFixed(1) + ' Mbps';
   el.className =
-    'diag-value ' + (mbps >= HEALTHY_DOWN_MBPS ? 'ok' : mbps >= FAIL_DOWN_MBPS ? 'warn' : 'bad');
+    'diag-value ' +
+    (mbps >= healthyThreshold ? 'ok' : mbps >= weakThreshold ? 'warn' : 'bad');
   return mbps;
 }
 
@@ -139,6 +150,7 @@ export default {
     renderDiagSummary(ctx.body, {
       state: 'loading',
       title: 'Checking your connection',
+      description: 'Measuring how quickly your network responds and how much data it can move.',
       line: 'Measuring latency...',
       detailsHTML,
     });
@@ -174,7 +186,7 @@ export default {
       updateDiagSummary({
         state: 'bad',
         title: "We couldn't reach the network",
-        line: 'No response — check your Wi-Fi',
+        description: DESCRIPTIONS.bad,
       });
       ctx.markResult('fail', 'Network checks timed out');
       ctx.setButtons([{ label: 'Got it →', primary: true, action: ctx.advance }]);
@@ -190,54 +202,70 @@ export default {
       updateDiagSummary({
         state: 'loading',
         title: 'Checking your connection',
-        line: 'Measuring bandwidth...',
+        description: 'Measuring how much data your connection can move up and down.',
       });
 
       const dl = await measureDownload(DOWNLOAD_BYTES, BANDWIDTH_TIMEOUT_MS);
       if (stageTimedOut) return;
-      const downMbps = fmtMbps(dl.bytes, dl.seconds, document.getElementById('diag-down'));
+      const downMbps = fmtMbps(
+        dl.bytes,
+        dl.seconds,
+        document.getElementById('diag-down'),
+        HEALTHY_DOWN_MBPS,
+        WEAK_DOWN_MBPS,
+      );
 
       const ul = await measureUpload(UPLOAD_BYTES, BANDWIDTH_TIMEOUT_MS);
       if (stageTimedOut) return;
-      const upMbps = fmtMbps(ul.bytes, ul.seconds, document.getElementById('diag-up'));
+      const upMbps = fmtMbps(
+        ul.bytes,
+        ul.seconds,
+        document.getElementById('diag-up'),
+        HEALTHY_UP_MBPS,
+        WEAK_UP_MBPS,
+      );
 
       clearTimeout(stageTimeout);
 
-      const issues = [];
-      if (!navigator.onLine) issues.push('offline');
-      if (net === null && app === null) issues.push('no network');
-      if (app !== null && app > FAIL_APP_PING_MS) issues.push('app very slow');
-      if (downMbps !== null && downMbps < FAIL_DOWN_MBPS) issues.push('download too slow');
-
       const slowestPing = Math.max(app || 0, net || 0);
-      const bandwidthLow =
-        (downMbps !== null && downMbps < HEALTHY_DOWN_MBPS) ||
-        (upMbps !== null && upMbps < HEALTHY_UP_MBPS);
+
+      const failures = [];
+      if (!navigator.onLine) failures.push('offline');
+      if (net === null && app === null) failures.push('no network');
+      if (app !== null && app > FAIL_APP_PING_MS) failures.push('app very slow');
+      if (downMbps !== null && downMbps < FAIL_DOWN_MBPS) failures.push('download too slow');
+      if (slowestPing > SLOW_PING_MS * 2) failures.push('very high latency');
+
+      const weaknesses = [];
+      if (slowestPing > SLOW_PING_MS) weaknesses.push('high latency');
+      else if (slowestPing > HEALTHY_PING_MS) weaknesses.push('moderate latency');
+      if (downMbps !== null && downMbps < HEALTHY_DOWN_MBPS) weaknesses.push('limited download');
+      if (upMbps !== null && upMbps < HEALTHY_UP_MBPS) weaknesses.push('limited upload');
 
       const bwLine = `${downMbps !== null ? downMbps.toFixed(1) + '↓' : '—'} / ${upMbps !== null ? upMbps.toFixed(1) + '↑' : '—'} Mbps`;
       const pingLine = `app ${app ? Math.round(app) + 'ms' : '—'} · internet ${net ? Math.round(net) + 'ms' : '—'}`;
 
-      let state, title, line, btnLabel;
-      if (issues.length > 0) {
+      let state, title, description, btnLabel;
+      if (failures.length > 0) {
         state = 'bad';
         title = "Your connection isn't working well";
-        line = issues.join(', ');
-        ctx.markResult('fail', `${line} · ${bwLine}`);
+        description = DESCRIPTIONS.bad;
+        ctx.markResult('fail', `${failures.join(', ')} · ${bwLine}`);
         btnLabel = 'Got it →';
-      } else if (slowestPing > SLOW_PING_MS || bandwidthLow) {
+      } else if (weaknesses.length > 0) {
         state = 'warn';
-        title = 'Your connection is below the recommended level';
-        line = `${pingLine} · ${bwLine}`;
-        ctx.markResult('pass', line);
+        title = 'Your connection is weaker than recommended';
+        description = DESCRIPTIONS.warn;
+        ctx.markResult('pass', `weak: ${weaknesses.join(', ')} · ${pingLine} · ${bwLine}`);
         btnLabel = 'Continue anyway →';
       } else {
         state = 'ok';
         title = 'Your connection looks healthy';
-        line = `${pingLine} · ${bwLine}`;
-        ctx.markResult('pass', line);
+        description = DESCRIPTIONS.ok;
+        ctx.markResult('pass', `${pingLine} · ${bwLine}`);
         btnLabel = 'Looks good →';
       }
-      updateDiagSummary({ state, title, line });
+      updateDiagSummary({ state, title, description });
       ctx.setButtons([{ label: btnLabel, primary: true, action: ctx.advance }]);
     })();
   },
