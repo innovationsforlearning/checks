@@ -1,0 +1,65 @@
+@media (max-width: 640px) {
+  /* ── Global layout ── */
+  #app {
+    padding: 1rem 1rem 2rem;
+    gap: 1rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  /* ── Welcome screen ── */
+  #screen-welcome {
+    padding-top: 1rem;
+  }
+  #screen-welcome > .btn {
+    width: 100%;
+    text-align: center;
+  }
+  .test-selector {
+    padding: 1rem 1.25rem;
+  }
+
+  /* ── Test footer ── */
+  .test-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .btn-group {
+    flex-direction: column;
+  }
+  .btn-group .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ── Results ── */
+  .results-score {
+    font-size: 2.75rem;
+  }
+  .results-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  /* ── Diag rows — stack label above value for long strings ── */
+  .diag-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .diag-value {
+    text-align: left;
+  }
+
+  /* ── Overlay ── */
+  .fs-header {
+    padding: 0.75rem 1rem;
+  }
+  .fs-footer {
+    padding: 0.6rem 1rem;
+  }
+}

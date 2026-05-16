@@ -4,6 +4,7 @@ export default {
   id: 'trackpad-drag',
   icon: '🖱️',
   name: 'Trackpad / Touchscreen (drag)',
+  skipIfTouch: true,
   instruction: 'Click and drag the filled circle into the dashed target.',
   run(ctx) {
     runDragToCircle(

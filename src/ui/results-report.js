@@ -1,25 +1,27 @@
-function buildReport(active, results, { total, passed, failed }) {
+export function buildReport(active, results, { total, passed, failed }) {
   const ts = new Date().toISOString();
   const ua = navigator.userAgent;
   const screen = `${window.screen.width}×${window.screen.height} @${window.devicePixelRatio}x`;
   const viewport = `${window.innerWidth}×${window.innerHeight}`;
 
   const lines = [];
-  lines.push('System Check — issues found');
+  lines.push(failed > 0 ? 'System Check — issues found' : 'System Check — diagnostic report');
   lines.push(`Time:     ${ts}`);
   lines.push(`Score:    ${passed}/${total} passed, ${failed} failed`);
   lines.push(`Browser:  ${ua}`);
   lines.push(`Screen:   ${screen}`);
   lines.push(`Viewport: ${viewport}`);
-  lines.push('');
-  lines.push('Failed checks');
-  lines.push('-------------');
-  active
-    .filter((t) => results[t.id]?.status === 'fail')
-    .forEach((t) => {
+
+  const failures = active.filter((t) => results[t.id]?.status === 'fail');
+  if (failures.length > 0) {
+    lines.push('');
+    lines.push('Failed checks');
+    lines.push('-------------');
+    failures.forEach((t) => {
       const r = results[t.id];
       lines.push(`✕ ${t.name} — ${r.label || 'no detail'}`);
     });
+  }
 
   const skipped = active.filter((t) => results[t.id]?.status === 'skip');
   if (skipped.length > 0) {
@@ -64,12 +66,6 @@ export function renderReport(active, results, totals) {
   const host = document.getElementById('results-report');
   const slot = document.getElementById('results-copy-slot');
   if (!host || !slot) return;
-
-  if (totals.failed === 0) {
-    host.innerHTML = '';
-    slot.innerHTML = '';
-    return;
-  }
 
   const report = buildReport(active, results, totals);
   host.innerHTML = `

@@ -137,3 +137,22 @@
   width: 1px;
   height: 1px;
 }
+
+/* ── Keyboard — touch tap-grid variant ── */
+.kb-layout--touch {
+  overflow-x: hidden;
+  padding: 0.75rem 0.5rem;
+  gap: 6px;
+  align-items: stretch;
+}
+.kb-layout--touch .kb-row {
+  gap: 3px;
+  width: 100%;
+}
+.kb-key--touch {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}

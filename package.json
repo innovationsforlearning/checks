@@ -34,13 +34,19 @@
     "start": "serve -s dist -l ${PORT:-3000}",
     "format": "prettier --write \"src/**/*.{js,css}\" \"*.{html,md,json}\"",
     "format:check": "prettier --check \"src/**/*.{js,css}\" \"*.{html,md,json}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "heroku-postbuild": "npm run build"
   },
   "dependencies": {
     "serve": "^14.2.4"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.6",
+    "jsdom": "^29.1.1",
     "prettier": "^3.3.3",
-    "vite": "^5.4.10"
+    "vite": "^5.4.10",
+    "vitest": "^4.1.6"
   }
 }
