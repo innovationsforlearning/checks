@@ -6,13 +6,12 @@ export default {
   id: 'speaker',
   icon: '🔊',
   name: 'Speakers',
-  instruction:
-    'A tone will play. Turn your volume up if needed, then confirm whether you heard it.',
+  instruction: 'Tap Play to hear the tone, then confirm whether you heard it.',
   run(ctx) {
     ctx.body.innerHTML = `
       <div class="test-prompt">
-        <h2 class="test-prompt-heading">Did you hear that?</h2>
-        <p class="test-prompt-sub">A short tone is playing now. Turn your volume up if you missed it.</p>
+        <h2 class="test-prompt-heading">Test your speakers</h2>
+        <p class="test-prompt-sub">Tap Play to hear a short tone. Turn your volume up if needed.</p>
       </div>
       <div id="speaker-vis">
         ${Array(WAVE_BARS)
@@ -46,28 +45,30 @@ export default {
         );
         ctx.addCleanup(() => clearTimeout(stopAnim));
       } catch {}
+      showConfirmButtons();
     }
 
-    const playSoon = setTimeout(play, 300);
-    ctx.addCleanup(() => clearTimeout(playSoon));
+    function showConfirmButtons() {
+      ctx.setButtons([
+        { label: '↺ Play again', action: play },
+        {
+          label: "I didn't hear it",
+          action: () => {
+            ctx.markResult('fail', 'No audio heard');
+            ctx.advance();
+          },
+        },
+        {
+          label: 'Yes, I heard it ✓',
+          primary: true,
+          action: () => {
+            ctx.markResult('pass', 'Speakers working');
+            ctx.advance();
+          },
+        },
+      ]);
+    }
 
-    ctx.setButtons([
-      { label: '↺ Play again', action: play },
-      {
-        label: "I didn't hear it",
-        action: () => {
-          ctx.markResult('fail', 'No audio heard');
-          ctx.advance();
-        },
-      },
-      {
-        label: 'Yes, I heard it ✓',
-        primary: true,
-        action: () => {
-          ctx.markResult('pass', 'Speakers working');
-          ctx.advance();
-        },
-      },
-    ]);
+    ctx.setButtons([{ label: '▶ Play tone', primary: true, action: play }]);
   },
 };
