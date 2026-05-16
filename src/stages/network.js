@@ -14,7 +14,6 @@ const WEAK_UP_MBPS = 1;
 const FAIL_DOWN_MBPS = 1.5;
 const HEALTHY_PING_MS = 150;
 const SLOW_PING_MS = 400;
-const FAIL_APP_PING_MS = 1500;
 
 const DESCRIPTIONS = {
   ok: 'Video calls, screen sharing, and uploads should all run smoothly. Pages will load quickly and audio should stay clear.',
@@ -227,23 +226,20 @@ export default {
 
       clearTimeout(stageTimeout);
 
-      const slowestPing = Math.max(app || 0, net || 0);
-
       const failures = [];
       if (!navigator.onLine) failures.push('offline');
       if (net === null && app === null) failures.push('no network');
-      if (app !== null && app > FAIL_APP_PING_MS) failures.push('app very slow');
       if (downMbps !== null && downMbps < FAIL_DOWN_MBPS) failures.push('download too slow');
-      if (slowestPing > SLOW_PING_MS * 2) failures.push('very high latency');
+      if (net !== null && net > SLOW_PING_MS * 2) failures.push('very high latency');
 
       const weaknesses = [];
-      if (slowestPing > SLOW_PING_MS) weaknesses.push('high latency');
-      else if (slowestPing > HEALTHY_PING_MS) weaknesses.push('moderate latency');
+      if (net !== null && net > SLOW_PING_MS) weaknesses.push('high latency');
+      else if (net !== null && net > HEALTHY_PING_MS) weaknesses.push('moderate latency');
       if (downMbps !== null && downMbps < HEALTHY_DOWN_MBPS) weaknesses.push('limited download');
       if (upMbps !== null && upMbps < HEALTHY_UP_MBPS) weaknesses.push('limited upload');
 
       const bwLine = `${downMbps !== null ? downMbps.toFixed(1) + '↓' : '—'} / ${upMbps !== null ? upMbps.toFixed(1) + '↑' : '—'} Mbps`;
-      const pingLine = `app ${app ? Math.round(app) + 'ms' : '—'} · internet ${net ? Math.round(net) + 'ms' : '—'}`;
+      const pingLine = `internet ${net !== null ? Math.round(net) + 'ms' : '—'}`;
 
       let state, title, description, btnLabel;
       if (failures.length > 0) {
