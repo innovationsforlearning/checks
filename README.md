@@ -6,18 +6,19 @@ Built as a [Vite](https://vitejs.dev/) static app — vanilla JavaScript, no fra
 
 ## What it tests
 
-| Stage                  | Checks                                                                                                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Browser & device       | User agent, OS, viewport, cookies, local storage                                                                                                              |
-| Network                | Online status, connection type, latency to the app and the public internet, **download/upload bandwidth** (via Cloudflare's `speed.cloudflare.com` endpoints) |
-| Video calling (WebRTC) | WebRTC support, STUN reachability, ICE candidate types, public IP                                                                                             |
-| Webcam                 | Live preview — user confirms they can see themselves                                                                                                          |
-| Microphone             | Live level meter with auto voice detection                                                                                                                    |
-| Speakers               | Plays a tone; user confirms they heard it                                                                                                                     |
-| Touchscreen            | Tap-the-corners + drag-to-target (skipped on non-touch devices)                                                                                               |
-| Touchscreen (drag)     | Horizontal drag gesture (skipped on non-touch devices)                                                                                                        |
-| Trackpad / Mouse       | Click-the-corners + drag-to-target                                                                                                                            |
-| Keyboard               | On-screen keyboard layout that lights up each key as it's pressed                                                                                             |
+| Stage                          | Checks                                                                                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser & device               | User agent, OS, viewport, cookies, local storage                                                                                                              |
+| Network                        | Online status, connection type, latency to the app and the public internet, **download/upload bandwidth** (via Cloudflare's `speed.cloudflare.com` endpoints) |
+| Video calling (WebRTC)         | WebRTC support, STUN reachability, ICE candidate types, public IP                                                                                             |
+| Webcam                         | Live preview — user confirms they can see themselves                                                                                                          |
+| Microphone                     | Live level meter with auto voice detection                                                                                                                    |
+| Speakers                       | Plays a tone; user confirms they heard it                                                                                                                     |
+| Touchscreen (tap)              | Tap-the-corners (skipped on non-touch devices)                                                                                                                |
+| Touchscreen (drag)             | Drag-to-target gesture (skipped on non-touch devices)                                                                                                         |
+| Trackpad / Touchscreen (click) | Click-the-corners                                                                                                                                             |
+| Trackpad / Touchscreen (drag)  | Drag-to-target gesture                                                                                                                                        |
+| Keyboard                       | On-screen keyboard layout that lights up each key as it's pressed                                                                                             |
 
 Each stage produces a `pass` / `warn` / `fail` / `skip` result, and the final screen summarises the run.
 
@@ -73,15 +74,27 @@ Promote staging → production via the dashboard or `heroku pipelines:promote`.
 
 Run `npm run build` and upload `dist/` to your host of choice (S3, Netlify, Cloudflare Pages, GitHub Pages, nginx, etc.). There are no runtime dependencies.
 
+## Tests
+
+Vitest with the jsdom environment — no browser, no network.
+
+```bash
+npm test            # one-shot run
+npm run test:watch  # watch mode
+npm run test:coverage
+```
+
+Stage tests live in `tests/stages/` and mock browser APIs (`getUserMedia`, `RTCPeerConnection`, `fetch`, `AudioContext`) via [tests/helpers/mock-globals.js](./tests/helpers/mock-globals.js). Setup shims for jsdom gaps (pointer capture, `matchMedia`, layout) are in [tests/setup.js](./tests/setup.js).
+
 ## Network thresholds
 
-The network stage's verdict combines latency and bandwidth:
+The network stage's verdict combines latency and bandwidth. Thresholds live at the top of [src/stages/network.js](./src/stages/network.js):
 
-- **Healthy** — latency < 600 ms to both targets, download ≥ 5 Mbps, upload ≥ 3 Mbps
-- **Warn** — any of: latency > 600 ms, download < 5 Mbps, or upload < 3 Mbps
-- **Fail** — offline, no network response, app latency > 1500 ms, or download < 1.5 Mbps
+- **Healthy** — latency < 150 ms to both targets, download ≥ 10 Mbps, upload ≥ 3 Mbps
+- **Warn** — any of: latency > 150 ms (moderate) or > 400 ms (high), download < 10 Mbps, or upload < 3 Mbps
+- **Fail** — offline, no network response, app latency > 1500 ms, slowest latency > 800 ms, or download < 1.5 Mbps
 
-Bandwidth uses Cloudflare's public speed-test endpoints (`__down`, `__up`) with a 12-second cap per direction, so a stuck connection still produces a result rather than hanging the stage.
+Bandwidth uses Cloudflare's public speed-test endpoints (`__down`, `__up`) with a 12-second cap per direction, so a stuck connection still produces a result rather than hanging the stage. The whole stage is bounded by a 45-second timeout.
 
 ## Project layout
 
@@ -89,14 +102,16 @@ Bandwidth uses Cloudflare's public speed-test endpoints (`__down`, `__up`) with 
 index.html        # static shell — no app logic
 src/
   main.js         # bootstrap + stage runner
-  results.js      # final results screen
+  assets/         # static assets
   lib/            # cleanup bag + small helpers
-  ui/             # screens, progress, footer, diag, overlay
   stages/         # one file per test
   styles/         # CSS, split by concern
+  ui/             # screens, progress, footer, diag, overlay, results
+tests/            # vitest specs (helpers/, lib/, stages/, ui/)
 Procfile          # Heroku web process
 app.json          # Heroku app manifest
 vite.config.js    # Vite config
+vitest.config.js  # Vitest config (jsdom env, setup file)
 ```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on the stage contract and how to add a new test.
