@@ -23,7 +23,10 @@ function startTests() {
   state.touchSupported = hasTouchScreen();
   const selected = getSelectedIds();
   state.activeTests = TESTS.filter(
-    (t) => selected.has(t.id) && !(t.skipIfNoTouch && !state.touchSupported),
+    (t) =>
+      selected.has(t.id) &&
+      !(t.skipIfNoTouch && !state.touchSupported) &&
+      !(t.skipIfTouch && state.touchSupported),
   );
   if (state.activeTests.length === 0) return;
   state.index = 0;

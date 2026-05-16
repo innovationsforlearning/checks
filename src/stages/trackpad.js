@@ -4,6 +4,7 @@ export default {
   id: 'trackpad',
   icon: '⬛',
   name: 'Trackpad / Touchscreen (click)',
+  skipIfTouch: true,
   instruction: 'Click each labeled zone — corners first or center first, order doesn’t matter.',
   run(ctx) {
     runCorners(
